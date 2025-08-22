@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spielführer-Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .unselectable {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <h1 class="text-4xl sm:text-5xl font-bold mb-8 text-center text-teal-400">Spielführer-Dashboard</h1>
+
+    <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
+    <audio id="correctSound" src="/sounds/correct.mp3"></audio>
+    <audio id="wrongSound" src="/sounds/wrong.mp3"></audio>
+
+    <div id="buzzerDisplay" class="text-center p-8 mb-8 rounded-lg shadow-xl w-11/12 min-h-[250px] max-w-2xl bg-gray-800">
+        <h2 id="buzzerWinner" class="text-5xl  font-extrabold text-white mt-4 hidden"></h2>
+        <div id="moderatorControls" class="mt-8 flex flex-row items-center gap-4 hidden">
+        <button id="correctBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 w-full">
+            Richtig
+        </button>
+        <button id="wrongBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 w-full">
+            Falsch
+        </button>
+    </div>
+    </div>
+
+    <div id="pointsButtons" class="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-4">
+    </div>
+
+    
+
+    <div id="playersContainer" class="flex flex-wrap justify-center gap-6 p-4 w-full">
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        socket.emit('register-moderator');
+
+        const buzzerWinner = document.getElementById('buzzerWinner');
+        const moderatorControls = document.getElementById('moderatorControls');
+        const correctBtn = document.getElementById('correctBtn');
+        const wrongBtn = document.getElementById('wrongBtn');
+        const playersContainer = document.getElementById('playersContainer');
+        const pointsButtonsContainer = document.getElementById('pointsButtons');
+        const correctSound = document.getElementById('correctSound');
+        const wrongSound = document.getElementById('wrongSound');
+
+        let players = [];
+        let selectedPoints = localStorage.getItem('selectedPoints') ? parseInt(localStorage.getItem('selectedPoints')) : 0;
+
+        socket.on('buzzer-winner', (name) => {
+            buzzerWinner.textContent = `${name}`;
+            buzzerWinner.classList.remove('hidden');
+            moderatorControls.classList.remove('hidden');
+        });
+
+        correctBtn.addEventListener('click', () => {
+            if (selectedPoints > 0) {
+                socket.emit('moderator-correct', selectedPoints);
+            }
+        });
+
+        wrongBtn.addEventListener('click', () => {
+            socket.emit('moderator-release-buzzer');
+        });
+
+        socket.on('buzzer-unlocked', () => {
+            buzzerWinner.textContent = '';
+            buzzerWinner.classList.add('hidden');
+            moderatorControls.classList.add('hidden');
+        });
+
+        function createPlayerCard(name, score, text = '') {
+            const card = document.createElement('div');
+            card.className = 'player-card p-6 flex flex-col items-center text-center';
+
+            const nameEl = document.createElement('h2');
+            nameEl.className = 'text-2xl font-bold mb-2 text-white';
+            nameEl.textContent = name;
+
+            const scoreEl = document.createElement('p');
+            scoreEl.className = 'text-5xl font-extrabold my-4 text-teal-400 cursor-pointer unselectable';
+            scoreEl.textContent = score;
+
+            scoreEl.onclick = () => {
+                socket.emit('add-point-to-player', name);
+            };
+            scoreEl.oncontextmenu = (e) => {
+                e.preventDefault();
+                socket.emit('subtract-point-from-player', name);
+            };
+
+            const textEl = document.createElement('div');
+            textEl.className = 'w-full text-center text-base min-h-[36px] min-w-[80px] py-1 px-2 mb-2 rounded-lg bg-teal-800 text-white';
+            textEl.textContent = text;
+            textEl.id = `text-${name}`;
+
+            card.appendChild(textEl);
+            card.appendChild(nameEl);
+            card.appendChild(scoreEl);
+
+            return card;
+        }
+
+        socket.on('update-players', (updatedPlayers) => {
+            playersContainer.innerHTML = '';
+            updatedPlayers.forEach((player) => {
+                const card = createPlayerCard(player.name, player.score, player.text);
+                playersContainer.appendChild(card);
+            });
+        });
+
+        socket.on('update-text', ({ name, text }) => {
+            const textEl = document.getElementById(`text-${name}`);
+            if (textEl) {
+                textEl.textContent = text;
+            }
+        });
+
+        function generatePointButtons() {
+            for (let i = 1; i <= 10; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+
+                let buttonClasses = 'w-10 h-10 rounded-lg text-white font-bold transition-colors duration-200';
+                if (i === selectedPoints) {
+                    buttonClasses += ' ring-4 ring-teal-400 ring-offset-2 ring-offset-gray-900 bg-teal-500';
+                } else {
+                    buttonClasses += ' bg-gray-600 hover:bg-teal-500';
+                }
+                button.className = buttonClasses;
+
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('#pointsButtons button').forEach(btn => {
+                        btn.classList.remove('ring-4', 'ring-teal-400', 'ring-offset-2', 'ring-offset-gray-900', 'bg-teal-500');
+                        btn.classList.add('bg-gray-600');
+                    });
+                    
+                    button.classList.add('ring-4', 'ring-teal-400', 'ring-offset-2', 'ring-offset-gray-900', 'bg-teal-500');
+                    button.classList.remove('bg-gray-600');
+
+                    selectedPoints = i;
+                    localStorage.setItem('selectedPoints', i);
+                });
+                pointsButtonsContainer.appendChild(button);
+            }
+        }
+        
+        generatePointButtons();
+    </script>
+</body>
+</html>

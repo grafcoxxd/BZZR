@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BZZR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .player-card {
+            background-color: #1a202c;
+            color: #e2e8f0;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .correct-btn {
+            background-color: #38a169;
+        }
+        .wrong-btn {
+            background-color: #e53e3e;
+        }
+        .score-adjust-btn {
+            background-color: #4a5568;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
+    <audio id="correctSound" src="/sounds/correct.mp3"></audio>
+    <audio id="wrongSound" src="/sounds/wrong.mp3"></audio>
+
+    <div id="game-container" class="w-full flex flex-col items-center justify-between">
+        <div id="nameEntry" class="w-full max-w-sm flex flex-col items-center gap-4 mt-10">
+            <input type="text" id="playerNameInput" placeholder="Dein Name" class="flex-grow p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 text-center">
+            <button id="registerPlayerBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                Beitreten
+            </button>
+        </div>
+    
+        <div id="buzzer-section" class="flex flex-col items-center hidden">
+            <button id="buzzerBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold mt-20 mb-10 p-20 rounded-full text-4xl sm:text-6xl transition-all duration-300 transform hover:scale-105 min-h-[400px] min-w-[400px]">
+               
+            </button>
+            <p id="buzzerStatus" class="text-xl text-yellow-300 font-semibold text-center"></p>
+            <input type="text" id="answerInput" placeholder="Deine Antwort" class="w-full max-w-sm mt-4 p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 text-center">
+        </div>
+    
+        <div id="playersContainer" class="flex flex-wrap justify-center gap-6 p-4 w-full mt-auto">
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/main.js"></script>
+    
+</body>
+</html>
