@@ -17,29 +17,35 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
-
-    <h1 class="text-4xl sm:text-5xl font-bold mb-8 text-center text-teal-400">Moderator</h1>
+<div class="flex flex-wrap justify-center items-center gap-6 p-4 w-full">
+    <h1 class="text-4xl sm:text-5xl font-bold text-center text-teal-200">Mod Office</h1>
+    <button id="resetBtn" class="bg-gray-500 hover:bg-gray-600 rounded-lg transition duration-300 max-w-[45px] h-[45px] flex-1 text-teal-200 text-4xl">
+        ♻
+    </button>
+</div>
 
     <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
     <audio id="correctSound" src="/sounds/correct.mp3"></audio>
     <audio id="wrongSound" src="/sounds/wrong.mp3"></audio>
 
-    <div id="buzzerDisplay" class="text-center p-8 mb-8 rounded-lg shadow-xl w-11/12 min-h-[250px] max-w-2xl bg-gray-800">
-        <h2 id="buzzerWinner" class="text-5xl  font-extrabold text-white mt-4 hidden"></h2>
-        <div id="moderatorControls" class="mt-8 flex flex-row items-center gap-4 hidden">
-        <button id="correctBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 w-full">
-            Richtig
-        </button>
-        <button id="wrongBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 w-full">
-            Falsch
-        </button>
-    </div>
+    <div id="buzzerDisplay" class="text-center mb-8 rounded-lg shadow-xl w-11/12 min-h-[250px] max-w-2xl bg-gray-800 flex flex-col">
+        <div class="flex-grow flex items-center justify-center">
+             <h2 id="buzzerWinner" class="text-5xl font-extrabold text-white hidden"></h2>
+             <p id="defaultText" class="text-2xl font-semibold text-gray-400">Warten auf Buzzer...</p>
+        </div>
+        
+        <div id="moderatorControls" class="flex-grow flex flex-row items-stretch hidden">
+            <button id="correctBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-bl-lg transition duration-300 flex-1 flex items-center justify-center text-lg sm:text-xl">
+                Richtig
+            </button>
+            <button id="wrongBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-br-lg transition duration-300 flex-1 flex items-center justify-center text-lg sm:text-xl">
+                Falsch
+            </button>
+        </div>
     </div>
 
     <div id="pointsButtons" class="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-4">
     </div>
-
-    
 
     <div id="playersContainer" class="flex flex-wrap justify-center gap-6 p-4 w-full">
     </div>
@@ -50,20 +56,28 @@
         socket.emit('register-moderator');
 
         const buzzerWinner = document.getElementById('buzzerWinner');
+        const defaultText = document.getElementById('defaultText');
         const moderatorControls = document.getElementById('moderatorControls');
         const correctBtn = document.getElementById('correctBtn');
         const wrongBtn = document.getElementById('wrongBtn');
+        const resetBtn = document.getElementById('resetBtn');
         const playersContainer = document.getElementById('playersContainer');
         const pointsButtonsContainer = document.getElementById('pointsButtons');
+        const buzzerSound = document.getElementById('buzzerSound');
         const correctSound = document.getElementById('correctSound');
         const wrongSound = document.getElementById('wrongSound');
+        buzzerSound.volume = 0.17;
+        correctSound.volume = 0.1;
+        wrongSound.volume = 0.1;
 
         let players = [];
         let selectedPoints = localStorage.getItem('selectedPoints') ? parseInt(localStorage.getItem('selectedPoints')) : 0;
 
         socket.on('buzzer-winner', (name) => {
+            buzzerSound.play();
             buzzerWinner.textContent = `${name}`;
             buzzerWinner.classList.remove('hidden');
+            defaultText.classList.add('hidden');
             moderatorControls.classList.remove('hidden');
         });
 
@@ -77,24 +91,40 @@
             socket.emit('moderator-release-buzzer');
         });
 
+        resetBtn.addEventListener('click', () => {
+            // Sende das neue Event an den Server
+            socket.emit('reset-buzzer');
+        });
+
         socket.on('buzzer-unlocked', () => {
             buzzerWinner.textContent = '';
             buzzerWinner.classList.add('hidden');
+            defaultText.classList.remove('hidden');
             moderatorControls.classList.add('hidden');
         });
+        
+        socket.on('play-correct-sound', () => {
+            correctSound.play();
+        });
 
-        function createPlayerCard(name, score, text = '') {
+        socket.on('play-wrong-sound', () => {
+            wrongSound.play();
+        });
+
+        function createPlayerCard(name, score, text = '', color) {
             const card = document.createElement('div');
             card.className = 'player-card p-6 flex flex-col items-center text-center';
 
             const nameEl = document.createElement('h2');
-            nameEl.className = 'text-2xl font-bold mb-2 text-white';
+            nameEl.className = 'text-2xl font-bold mb-2 mt-4';
             nameEl.textContent = name;
+            nameEl.style.color = color;
 
             const scoreEl = document.createElement('p');
             scoreEl.className = 'text-5xl font-extrabold my-4 text-teal-400 cursor-pointer unselectable';
             scoreEl.textContent = score;
-
+            scoreEl.style.color = color;
+            
             scoreEl.onclick = () => {
                 socket.emit('add-point-to-player', name);
             };
@@ -104,7 +134,7 @@
             };
 
             const textEl = document.createElement('div');
-            textEl.className = 'w-full text-center text-base min-h-[36px] min-w-[80px] py-1 px-2 mb-2 rounded-lg bg-teal-800 text-white';
+            textEl.className = 'w-full text-center text-base min-h-[36px] min-w-[80px] py-1 px-2 mb-2 rounded-lg font-bold bg-teal-200 text-teal-800';
             textEl.textContent = text;
             textEl.id = `text-${name}`;
 
@@ -118,7 +148,7 @@
         socket.on('update-players', (updatedPlayers) => {
             playersContainer.innerHTML = '';
             updatedPlayers.forEach((player) => {
-                const card = createPlayerCard(player.name, player.score, player.text);
+                const card = createPlayerCard(player.name, player.score, player.text, player.color);
                 playersContainer.appendChild(card);
             });
         });

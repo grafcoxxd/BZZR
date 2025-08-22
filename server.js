@@ -10,6 +10,20 @@ const server = http.createServer(app);
 // Socket.IO mit dem HTTP-Server verbinden
 const io = new Server(server);
 
+const playerColors = [
+  '#FCD34D', // gelb
+  '#4ADE80', // grün
+  '#6EE7B7', // mint
+  '#A78BFA', // lila
+  '#F87171', // rot
+  '#38BDF8', // hellblau
+  '#FB923C', // orange
+  '#2DD4BF', // türkis
+  '#9CA3AF', // grau
+];
+
+let availableColors = [...playerColors];
+
 // Ordner für öffentliche Dateien festlegen (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -42,13 +56,22 @@ io.on('connection', (socket) => {
   });
 
   socket.on('register-player', (name) => {
-    // Speichere den Spieler im globalen "players" Objekt
-    players.set(socket.id, { name: name, score: 0, text: '' }); // Füge 'text' hinzu
-    console.log(`Spieler registriert: ${name}`);
+    // Prüfe, ob noch Farben verfügbar sind
+    if (availableColors.length > 0) {
+        // Wähle einen zufälligen Index aus der Liste der verfügbaren Farben
+        const randomIndex = Math.floor(Math.random() * availableColors.length);
+        
+        // Weise die Farbe zu und entferne sie aus der Liste
+        const assignedColor = availableColors.splice(randomIndex, 1)[0];
 
-    // Sende die aktualisierte Spielerliste an alle Clients
-      io.emit('update-players', Array.from(players.values()));
-  });
+        players.set(socket.id, { name: name, score: 0, text: '', color: assignedColor }); 
+        console.log(`Spieler registriert: ${name} mit Farbe ${assignedColor}`);
+        io.emit('update-players', Array.from(players.values()));
+    } else {
+        // Optional: Was passiert, wenn keine Farben mehr da sind
+        console.log('Maximale Spieleranzahl erreicht, keine Farben mehr verfügbar.');
+    }
+});
 
   // Lausche auf das 'buzzer-pressed' Signal von einem Spieler
   socket.on('buzzer-pressed', () => {
@@ -111,6 +134,18 @@ socket.on('moderator-release-buzzer', () => {
   io.emit('buzzer-unlocked');
 });
 
+
+socket.on('reset-buzzer', () => {
+  // Setze die Buzzer-Logik zurück
+  buzzerLocked = false;
+  buzzerWinnerName = null;
+  console.log('Buzzer wurde zurückgesetzt.');
+
+  // Sende ein Event an alle Clients, um sie zu benachrichtigen
+  io.emit('buzzer-unlocked');
+});
+
+
 // Lausche auf das Signal, einen Punkt hinzuzufügen
 socket.on('add-point-to-player', (playerName) => {
   console.log(`Füge 1 Punkt hinzu für: ${playerName}`);
@@ -141,13 +176,18 @@ socket.on('player-typing', (text) => {
     }
 });
 
-    socket.on('disconnect', () => {
-        console.log('Ein Benutzer hat die Verbindung getrennt');
-        // Entferne den Spieler, wenn er die Verbindung verliert
-        players.delete(socket.id);
-        // Sende die aktualisierte Spielerliste an alle Clients
-        io.emit('update-players', Array.from(players.values()));
-    });
+socket.on('disconnect', () => {
+  console.log('Ein Benutzer hat die Verbindung getrennt');
+  const disconnectedPlayer = players.get(socket.id);
+  
+  if (disconnectedPlayer) {
+      // Füge die Farbe des getrennten Spielers wieder zur Liste hinzu
+      availableColors.push(disconnectedPlayer.color);
+      players.delete(socket.id);
+      console.log(`Spieler ${disconnectedPlayer.name} hat die Verbindung getrennt. Farbe ${disconnectedPlayer.color} wurde freigegeben.`);
+      io.emit('update-players', Array.from(players.values()));
+  }
+});
 
 });
 
