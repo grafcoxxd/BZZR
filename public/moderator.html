@@ -191,6 +191,20 @@
         }
         
         generatePointButtons();
+
+
+
+        // Ereignis-Listener für Verbindungsabbruch und -wiederherstellung
+        socket.on('disconnect', () => {
+            console.log('Disconnected');
+            // Zeige eine Nachricht an, dass die Verbindung getrennt ist
+        });
+
+        socket.on('connect', () => {
+            console.log('Reconnected');
+            // Registriere den Moderator erneut beim Server
+            socket.emit('register-moderator');
+        });
     </script>
 </body>
 </html>

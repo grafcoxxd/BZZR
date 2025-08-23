@@ -94,3 +94,23 @@ socket.on('play-correct-sound', () => {
 socket.on('play-wrong-sound', () => {
     wrongSound.play();
 });
+
+// Ereignis-Listener für Verbindungsabbruch und -wiederherstellung
+socket.on('disconnect', () => {
+    console.log('Verbindung zum Server getrennt.');
+    buzzerStatus.textContent = 'Verbindung getrennt. Versuche erneut zu verbinden...';
+    buzzerStatus.classList.remove('hidden');
+    buzzerBtn.disabled = true;
+});
+
+socket.on('connect', () => {
+    console.log('Verbindung zum Server wiederhergestellt.');
+    // Wenn der Spieler bereits einen Namen eingegeben hat, registriere ihn erneut
+    if (playerName) {
+        socket.emit('register-player', playerName);
+    }
+    // Setze die Benutzeroberfläche auf den Standard zurück
+    buzzerStatus.textContent = '';
+    buzzerStatus.classList.add('hidden');
+    buzzerBtn.disabled = false;
+});
