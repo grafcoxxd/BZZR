@@ -36,6 +36,7 @@ let buzzerWinnerName = null;
 let players = new Map(); // Wir verwenden eine Map, um Spieler nach ihrer Socket-ID zu speichern
 
 io.on('connection', (socket) => {
+
   console.log('Ein Benutzer ist verbunden');
 
   // Sende den aktuellen Zustand an den neuen Client
@@ -177,7 +178,7 @@ socket.on('player-typing', (text) => {
 });
 
 socket.on('disconnect', () => {
-  console.log('Ein Benutzer hat die Verbindung getrennt');
+  // console.log('Ein Benutzer hat die Verbindung getrennt');
   const disconnectedPlayer = players.get(socket.id);
   
   if (disconnectedPlayer) {
