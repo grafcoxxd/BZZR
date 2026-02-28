@@ -123,3 +123,8 @@ socket.on('connect', () => {
     }
     buzzerStatus.classList.add('hidden');
 });
+
+socket.on('scores-reset-globally', () => {
+    localStorage.setItem('playerScore', 0);
+    console.log('Punktestand lokal zurückgesetzt.');
+});

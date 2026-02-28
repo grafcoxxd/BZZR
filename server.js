@@ -128,6 +128,17 @@ io.on('connection', (socket) => {
         io.emit('update-players', Array.from(players.values()));
     }
   });
+
+  // Alle Punkte für alle Spieler zurücksetzen
+  socket.on('moderator-reset-all-scores', () => {
+    console.log('Moderator setzt alle Punkte zurück.');
+    players.forEach((player) => {
+      player.score = 0;
+    });
+  // Wichtig: Signal an alle senden, damit auch der LocalStorage geleert wird
+    io.emit('scores-reset-globally');
+    io.emit('update-players', Array.from(players.values()));
+  });
 });
 
 const PORT = process.env.PORT || 3000;

@@ -97,6 +97,13 @@
             socket.emit('reset-buzzer');
         });
 
+        // Doppelklick: Alle Punkte löschen
+        resetBtn.addEventListener('dblclick', () => {
+            if (confirm("Möchtest du wirklich ALLE Punkte aller Spieler löschen?")) {
+                socket.emit('moderator-reset-all-scores');
+            }
+        });
+
         socket.on('buzzer-unlocked', () => {
             buzzerWinner.textContent = '';
             buzzerWinner.classList.add('hidden');
