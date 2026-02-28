@@ -82,19 +82,33 @@ function createPlayerCard(name, score, color) {
 }
 
 socket.on('buzzer-locked', (buzzerName) => {
-  buzzerSound.play();
-  buzzerBtn.disabled = true;
-  buzzerBtn.textContent = `${buzzerName}`;
-  buzzerBtn.classList.add('bg-gray-500');
-  buzzerBtn.classList.remove('bg-red-500');
-  buzzerStatus.classList.remove('hidden');
+    buzzerSound.play();
+    buzzerBtn.disabled = true;
+    buzzerBtn.textContent = `${buzzerName}`;
+    buzzerBtn.classList.remove('bg-red-500');
+  
+    // Prüfen, ob WIR den Buzzer gedrückt haben
+    if (playerName === buzzerName) {
+        // Gewinner-Buzzer wird gelb
+        buzzerBtn.classList.add('bg-yellow-500');
+        buzzerBtn.classList.remove('bg-gray-500'); // Zur Sicherheit entfernen
+    } else {
+        // Für alle anderen wird der Buzzer grau
+        buzzerBtn.classList.add('bg-gray-500');
+        buzzerBtn.classList.remove('bg-yellow-500'); // Zur Sicherheit entfernen
+    }
+  
+    buzzerStatus.classList.remove('hidden');
 });
 
 socket.on('buzzer-unlocked', () => {
     buzzerBtn.disabled = false;
     buzzerBtn.textContent = '';
-    buzzerBtn.classList.remove('bg-gray-500');
-    buzzerBtn.classList.add('bg-red-500');
+    
+    // WICHTIG: Hier jetzt beide möglichen Farben (grau UND gelb) entfernen
+    buzzerBtn.classList.remove('bg-gray-500', 'bg-yellow-500');
+    
+    buzzerBtn.classList.add('bg-red-500'); // Wieder rot machen
     buzzerStatus.textContent = '';
     buzzerStatus.classList.add('hidden');
 });
