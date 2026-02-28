@@ -158,7 +158,7 @@ io.on('connection', (socket) => {
             players.delete(playerName);
             console.log(`Spieler ${playerName} endgültig entfernt.`);
             io.emit('update-players', Array.from(players.values()));
-        }, 60000); 
+        }, 300000); 
     }
   });
 });
