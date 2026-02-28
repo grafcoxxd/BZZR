@@ -6,6 +6,7 @@ const buzzerSound = document.getElementById('buzzerSound');
 const correctSound = document.getElementById('correctSound');
 const wrongSound = document.getElementById('wrongSound');
 const answerInput = document.getElementById('answerInput');
+const registerPlayerBtn = document.getElementById('registerPlayerBtn');
 
 buzzerSound.volume = 0.17;
 correctSound.volume = 0.1;
