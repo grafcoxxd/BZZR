@@ -6,7 +6,7 @@ const buzzerSound = document.getElementById('buzzerSound');
 const correctSound = document.getElementById('correctSound');
 const wrongSound = document.getElementById('wrongSound');
 const answerInput = document.getElementById('answerInput');
-const registerPlayerBtn = document.getElementById('registerPlayerBtn');
+const registerPlayerBtn = document.getElementById('registerPlayerBtn'); // Fix: Deklaration hinzugefügt
 
 buzzerSound.volume = 0.17;
 correctSound.volume = 0.1;
@@ -31,15 +31,24 @@ socket.on('buzzer-locked', (buzzerName) => {
 
 const playersContainer = document.getElementById('playersContainer');
 const playerNameInput = document.getElementById('playerNameInput');
-let playerName = null;
+let playerName = localStorage.getItem('playerName') || null;
 const nameEntryDiv = document.getElementById('nameEntry');
 const buzzerSectionDiv = document.getElementById('buzzer-section');
+
+// Falls der Name schon im Speicher ist, direkt einloggen
+if (playerName) {
+    nameEntryDiv.classList.add('hidden');
+    buzzerSectionDiv.classList.remove('hidden');
+    // Score wird im 'connect' Event gesendet
+}
 
 registerPlayerBtn.addEventListener('click', () => {
     const name = playerNameInput.value.trim();
     if (name) {
         playerName = name;
-        socket.emit('register-player', playerName);
+        localStorage.setItem('playerName', name);
+        const savedScore = parseInt(localStorage.getItem('playerScore')) || 0;
+        socket.emit('register-player', { name: playerName, score: savedScore });
         nameEntryDiv.classList.add('hidden');
         buzzerSectionDiv.classList.remove('hidden');
     }
@@ -70,6 +79,11 @@ socket.on('update-players', (updatedPlayers) => {
     updatedPlayers.forEach((player) => {
         const card = createPlayerCard(player.name, player.score, player.color);
         playersContainer.appendChild(card);
+        
+        // Eigenen Score lokal sichern, falls wir das sind
+        if (player.name === playerName) {
+            localStorage.setItem('playerScore', player.score);
+        }
     });
 });
 
@@ -96,7 +110,6 @@ socket.on('play-wrong-sound', () => {
     wrongSound.play();
 });
 
-// Ereignis-Listener für Verbindungsabbruch und -wiederherstellung
 socket.on('disconnect', () => {
     console.log('Verbindung zum Server getrennt.');
     buzzerStatus.textContent = 'Verbindung getrennt. Versuche erneut zu verbinden...';
@@ -106,11 +119,10 @@ socket.on('disconnect', () => {
 
 socket.on('connect', () => {
     console.log('Verbindung zum Server wiederhergestellt.');
-    // Wenn der Spieler bereits einen Namen eingegeben hat, registriere ihn erneut
     if (playerName) {
-        socket.emit('register-player', playerName);
+        const savedScore = parseInt(localStorage.getItem('playerScore')) || 0;
+        socket.emit('register-player', { name: playerName, score: savedScore });
     }
-    // Setze die Benutzeroberfläche auf den Standard zurück
     buzzerStatus.textContent = '';
     buzzerStatus.classList.add('hidden');
     buzzerBtn.disabled = false;
