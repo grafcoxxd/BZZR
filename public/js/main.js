@@ -11,11 +11,9 @@ buzzerSound.volume = 0.17;
 correctSound.volume = 0.1;
 wrongSound.volume = 0.1;
 
-let playerName = null;
-
 buzzerBtn.addEventListener('click', () => {
     if (playerName) {
-      socket.emit('buzzer-pressed');
+      socket.emit('buzzer-pressed', playerName);
     } else {
       alert('Bitte gib zuerst einen Spielernamen ein!');
     }
@@ -32,6 +30,7 @@ socket.on('buzzer-locked', (buzzerName) => {
 
 const playersContainer = document.getElementById('playersContainer');
 const playerNameInput = document.getElementById('playerNameInput');
+let playerName = null;
 const nameEntryDiv = document.getElementById('nameEntry');
 const buzzerSectionDiv = document.getElementById('buzzer-section');
 
@@ -96,7 +95,7 @@ socket.on('play-wrong-sound', () => {
     wrongSound.play();
 });
 
-// Reconnect-Verhalten verbessern
+// Ereignis-Listener für Verbindungsabbruch und -wiederherstellung
 socket.on('disconnect', () => {
     console.log('Verbindung zum Server getrennt.');
     buzzerStatus.textContent = 'Verbindung getrennt. Versuche erneut zu verbinden...';
@@ -106,10 +105,12 @@ socket.on('disconnect', () => {
 
 socket.on('connect', () => {
     console.log('Verbindung zum Server wiederhergestellt.');
+    // Wenn der Spieler bereits einen Namen eingegeben hat, registriere ihn erneut
     if (playerName) {
         socket.emit('register-player', playerName);
-        buzzerStatus.textContent = '';
-        buzzerStatus.classList.add('hidden');
-        buzzerBtn.disabled = false;
     }
+    // Setze die Benutzeroberfläche auf den Standard zurück
+    buzzerStatus.textContent = '';
+    buzzerStatus.classList.add('hidden');
+    buzzerBtn.disabled = false;
 });
