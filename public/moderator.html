@@ -11,6 +11,8 @@
         body { font-family: 'Inter', sans-serif; }
         .unselectable {
             -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
             user-select: none;
         }
     </style>
@@ -29,7 +31,9 @@
         <label id="dropZone" class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800/50 hover:bg-gray-800 hover:border-teal-500 transition-all duration-300">
             <div class="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
                 <span class="text-3xl mb-2 group-hover:scale-110 transition-transform duration-300">🖼️</span>
-                <p class="text-sm text-gray-400 group-hover:text-teal-400 font-medium text-center px-4">Bild hierher ziehen oder klicken</p>
+                <p class="text-sm text-gray-400 group-hover:text-teal-400 font-medium text-center px-4">
+                    Bild hierher ziehen oder klicken
+                </p>
             </div>
             <input type="file" id="imageUpload" accept="image/*" class="hidden">
         </label>
@@ -38,167 +42,270 @@
     <div id="previewContainer" class="relative hidden group mt-2">
         <div id="previewDropZone" class="relative p-1 bg-gradient-to-tr from-teal-500 to-blue-500 rounded-2xl shadow-2xl cursor-pointer hover:brightness-110 transition-all">
             <img id="imagePreview" src="" alt="Vorschau" class="max-h-64 rounded-xl border-4 border-gray-900 object-contain shadow-inner pointer-events-none">
+            
             <div id="replaceOverlay" class="absolute inset-0 bg-teal-500/40 rounded-xl flex items-center justify-center opacity-0 transition-opacity pointer-events-none">
                 <p class="text-white font-bold bg-gray-900/80 px-4 py-2 rounded-full shadow-lg">Bild ersetzen</p>
             </div>
         </div>
-        <button id="deleteImageBtn" class="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-gray-900 transition-transform hover:scale-110">
-            ✕
+        
+        <button id="deleteImageBtn" class="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-gray-900 transition-transform hover:scale-110 active:scale-95 z-10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+            </svg>
         </button>
     </div>
 </div>
 
-<div id="buzzerDisplay" class="text-center mb-8 rounded-lg shadow-xl w-11/12 min-h-[250px] max-w-2xl bg-gray-800 flex flex-col">
-    <div class="flex-grow flex items-center justify-center">
-         <h2 id="buzzerWinner" class="text-5xl font-extrabold text-white hidden"></h2>
-         <p id="defaultText" class="text-2xl font-semibold text-gray-400">Warten auf Buzzer...</p>
+    <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
+    <audio id="correctSound" src="/sounds/correct.mp3"></audio>
+    <audio id="wrongSound" src="/sounds/wrong.mp3"></audio>
+
+    <div id="buzzerDisplay" class="text-center mb-8 rounded-lg shadow-xl w-11/12 min-h-[250px] max-w-2xl bg-gray-800 flex flex-col">
+        <div class="flex-grow flex items-center justify-center">
+             <h2 id="buzzerWinner" class="text-5xl font-extrabold text-white hidden"></h2>
+             <p id="defaultText" class="text-2xl font-semibold text-gray-400">Warten auf Buzzer...</p>
+        </div>
+        
+        <div id="moderatorControls" class="flex-grow flex flex-row items-stretch hidden">
+            <button id="correctBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-bl-lg transition duration-300 flex-1 flex items-center justify-center text-lg sm:text-xl">
+                Richtig
+            </button>
+            <button id="wrongBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-br-lg transition duration-300 flex-1 flex items-center justify-center text-lg sm:text-xl">
+                Falsch
+            </button>
+        </div>
     </div>
-    <div id="moderatorControls" class="flex-grow flex flex-row items-stretch hidden">
-        <button id="correctBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-bl-lg flex-1 text-xl">Richtig</button>
-        <button id="wrongBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-br-lg flex-1 text-xl">Falsch</button>
-    </div>
-</div>
 
-<div id="pointsButtons" class="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-4"></div>
-<div id="playersContainer" class="flex flex-wrap justify-center gap-6 p-4 w-full"></div>
+    <div id="pointsButtons" class="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-4"></div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
-    socket.emit('register-moderator');
+    <div id="playersContainer" class="flex flex-wrap justify-center gap-6 p-4 w-full"></div>
 
-    const buzzerWinner = document.getElementById('buzzerWinner');
-    const defaultText = document.getElementById('defaultText');
-    const moderatorControls = document.getElementById('moderatorControls');
-    const correctBtn = document.getElementById('correctBtn');
-    const wrongBtn = document.getElementById('wrongBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const playersContainer = document.getElementById('playersContainer');
-    const pointsButtonsContainer = document.getElementById('pointsButtons');
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        socket.emit('register-moderator');
 
-    const imageUpload = document.getElementById('imageUpload');
-    const previewContainer = document.getElementById('previewContainer');
-    const imagePreview = document.getElementById('imagePreview');
-    const deleteImageBtn = document.getElementById('deleteImageBtn');
-    const uploadContainer = document.getElementById('uploadContainer');
-    const dropZone = document.getElementById('dropZone');
-    const previewDropZone = document.getElementById('previewDropZone');
-    const replaceOverlay = document.getElementById('replaceOverlay');
+        const buzzerWinner = document.getElementById('buzzerWinner');
+        const defaultText = document.getElementById('defaultText');
+        const moderatorControls = document.getElementById('moderatorControls');
+        const correctBtn = document.getElementById('correctBtn');
+        const wrongBtn = document.getElementById('wrongBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const playersContainer = document.getElementById('playersContainer');
+        const pointsButtonsContainer = document.getElementById('pointsButtons');
+        const buzzerSound = document.getElementById('buzzerSound');
+        const correctSound = document.getElementById('correctSound');
+        const wrongSound = document.getElementById('wrongSound');
+        
+        // Bild-Elemente
+        const imageUpload = document.getElementById('imageUpload');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const deleteImageBtn = document.getElementById('deleteImageBtn');
+        const uploadContainer = document.getElementById('uploadContainer');
+        const dropZone = document.getElementById('dropZone');
+        const previewDropZone = document.getElementById('previewDropZone');
+        const replaceOverlay = document.getElementById('replaceOverlay');
 
-    let selectedPoints = localStorage.getItem('selectedPoints') ? parseInt(localStorage.getItem('selectedPoints')) : 0;
+        buzzerSound.volume = 0.17;
+        correctSound.volume = 0.1;
+        wrongSound.volume = 0.1;
 
-    function handleFile(file) {
-        if (file.size > 2 * 1024 * 1024) { alert("Max 2MB!"); return; }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = e.target.result;
-            localStorage.setItem('currentQuestionImage', data);
-            socket.emit('image-updated', data);
-            showPreview(data);
-        };
-        reader.readAsDataURL(file);
-    }
+        let selectedPoints = localStorage.getItem('selectedPoints') ? parseInt(localStorage.getItem('selectedPoints')) : 0;
 
-    function showPreview(src) {
-        imagePreview.src = src;
-        previewContainer.classList.remove('hidden');
-        uploadContainer.classList.add('hidden');
-    }
+        // --- Bild Logik mit Server-Push ---
+        function handleFile(file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Das Bild ist zu groß (max. 2MB).");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imgData = event.target.result;
+                localStorage.setItem('currentQuestionImage', imgData);
+                socket.emit('image-updated', imgData); // An Server senden
+                showPreview(imgData);
+            };
+            reader.readAsDataURL(file);
+        }
 
-    function hidePreview() {
-        imagePreview.src = "";
-        previewContainer.classList.add('hidden');
-        uploadContainer.classList.remove('hidden');
-        localStorage.removeItem('currentQuestionImage');
-        socket.emit('image-removed');
-    }
+        function showPreview(src) {
+            imagePreview.src = src;
+            previewContainer.classList.remove('hidden');
+            uploadContainer.classList.add('hidden');
+        }
 
-    deleteImageBtn.addEventListener('click', hidePreview);
-    imageUpload.addEventListener('change', (e) => { if(e.target.files[0]) handleFile(e.target.files[0]); });
-    previewDropZone.addEventListener('click', () => imageUpload.click());
+        function hidePreview() {
+            imagePreview.src = "";
+            previewContainer.classList.add('hidden');
+            uploadContainer.classList.remove('hidden');
+            imageUpload.value = "";
+            localStorage.removeItem('currentQuestionImage');
+            socket.emit('image-removed'); // Server sagen: Bild weg
+        }
 
-    const zones = [dropZone, previewDropZone];
-    zones.forEach(zone => {
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
-            zone.addEventListener(name, (e) => { e.preventDefault(); e.stopPropagation(); });
+        deleteImageBtn.addEventListener('click', hidePreview);
+
+        imageUpload.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
         });
-        zone.addEventListener('dragenter', () => {
-            if (zone === dropZone) zone.classList.add('border-teal-400', 'bg-gray-700');
-            if (zone === previewDropZone) replaceOverlay.classList.remove('opacity-0');
+
+        // Klick auf Vorschau triggert ebenfalls Datei-Auswahl
+        previewDropZone.addEventListener('click', () => imageUpload.click());
+
+        // Drag & Drop für beide Zonen
+        const zones = [dropZone, previewDropZone];
+        zones.forEach(zone => {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            zone.addEventListener('dragenter', () => {
+                if (zone === dropZone) zone.classList.add('border-teal-400', 'bg-gray-700');
+                if (zone === previewDropZone) replaceOverlay.classList.remove('opacity-0');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                if (zone === dropZone) zone.classList.remove('border-teal-400', 'bg-gray-700');
+                if (zone === previewDropZone) replaceOverlay.classList.add('opacity-0');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                replaceOverlay.classList.add('opacity-0');
+                dropZone.classList.remove('border-teal-400', 'bg-gray-700');
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    handleFile(file);
+                }
+            });
         });
-        zone.addEventListener('dragleave', () => {
-            if (zone === dropZone) zone.classList.remove('border-teal-400', 'bg-gray-700');
-            if (zone === previewDropZone) replaceOverlay.classList.add('opacity-0');
+
+        // --- Buzzer & Moderator Logik ---
+        socket.on('buzzer-winner', (name) => {
+            buzzerSound.play();
+            buzzerWinner.textContent = `${name}`;
+            buzzerWinner.classList.remove('hidden');
+            defaultText.classList.add('hidden');
+            moderatorControls.classList.remove('hidden');
         });
-        zone.addEventListener('drop', (e) => {
-            replaceOverlay.classList.add('opacity-0');
-            dropZone.classList.remove('border-teal-400', 'bg-gray-700');
-            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+
+        correctBtn.addEventListener('click', () => {
+            if (selectedPoints > 0) {
+                socket.emit('moderator-correct', selectedPoints);
+            } else {
+                alert("Bitte wähle zuerst eine Punktzahl aus!");
+            }
         });
-    });
 
-    socket.on('buzzer-winner', (name) => {
-        buzzerWinner.textContent = name;
-        buzzerWinner.classList.remove('hidden');
-        defaultText.classList.add('hidden');
-        moderatorControls.classList.remove('hidden');
-    });
+        wrongBtn.addEventListener('click', () => {
+            socket.emit('moderator-release-buzzer');
+        });
 
-    socket.on('buzzer-unlocked', () => {
-        buzzerWinner.classList.add('hidden');
-        defaultText.classList.remove('hidden');
-        moderatorControls.classList.add('hidden');
-    });
+        resetBtn.addEventListener('click', () => {
+            socket.emit('reset-buzzer');
+        });
 
-    correctBtn.onclick = () => { if(selectedPoints > 0) socket.emit('moderator-correct', selectedPoints); };
-    wrongBtn.onclick = () => socket.emit('moderator-release-buzzer');
-    resetBtn.onclick = () => socket.emit('reset-buzzer');
-    resetBtn.ondblclick = () => { if(confirm("ALLE Punkte löschen?")) socket.emit('moderator-reset-all-scores'); };
+        resetBtn.addEventListener('dblclick', () => {
+            if (confirm("Möchtest du wirklich ALLE Punkte aller Spieler löschen?")) {
+                socket.emit('moderator-reset-all-scores');
+            }
+        });
 
-    socket.on('update-players', (p) => {
-        playersContainer.innerHTML = '';
-        p.forEach(player => {
+        socket.on('buzzer-unlocked', () => {
+            buzzerWinner.textContent = '';
+            buzzerWinner.classList.add('hidden');
+            defaultText.classList.remove('hidden');
+            moderatorControls.classList.add('hidden');
+        });
+        
+        socket.on('play-correct-sound', () => correctSound.play());
+        socket.on('play-wrong-sound', () => wrongSound.play());
+
+        // --- Spieler Anzeige ---
+        function createPlayerCard(name, score, text = '', color) {
             const card = document.createElement('div');
             card.className = 'player-card p-6 flex flex-col items-center text-center';
+
             const nameEl = document.createElement('h2');
             nameEl.className = 'text-2xl font-bold mb-2 mt-4';
-            nameEl.textContent = player.name;
-            nameEl.style.color = player.color;
+            nameEl.textContent = name;
+            nameEl.style.color = color;
+
             const scoreEl = document.createElement('p');
             scoreEl.className = 'text-5xl font-extrabold my-4 cursor-pointer unselectable';
-            scoreEl.textContent = player.score;
-            scoreEl.style.color = player.color;
-            scoreEl.onclick = () => socket.emit('add-point-to-player', player.name);
-            scoreEl.oncontextmenu = (e) => { e.preventDefault(); socket.emit('subtract-point-from-player', player.name); };
+            scoreEl.textContent = score;
+            scoreEl.style.color = color;
+
+            scoreEl.onclick = () => socket.emit('add-point-to-player', name);
+            scoreEl.oncontextmenu = (e) => {
+                e.preventDefault();
+                socket.emit('subtract-point-from-player', name);
+            };
+
             const textEl = document.createElement('div');
             textEl.className = 'w-full text-center text-base min-h-[36px] min-w-[80px] py-1 px-2 mb-2 rounded-lg font-bold bg-teal-200 text-teal-800';
-            textEl.textContent = player.text;
+            textEl.textContent = text;
+            textEl.id = `text-${name}`;
+
             card.appendChild(textEl);
             card.appendChild(nameEl);
             card.appendChild(scoreEl);
-            playersContainer.appendChild(card);
+
+            return card;
+        }
+
+        socket.on('update-players', (updatedPlayers) => {
+            playersContainer.innerHTML = '';
+            updatedPlayers.forEach((player) => {
+                const card = createPlayerCard(player.name, player.score, player.text, player.color);
+                playersContainer.appendChild(card);
+            });
         });
-    });
 
-    function generatePointButtons() {
-        pointsButtonsContainer.innerHTML = '';
-        for (let i = 1; i <= 10; i++) {
-            const button = document.createElement('button');
-            button.textContent = i;
-            button.className = `w-10 h-10 rounded-lg text-white font-bold transition-colors ${i === selectedPoints ? 'ring-4 ring-teal-400 bg-teal-500' : 'bg-gray-600 hover:bg-teal-500'}`;
-            button.onclick = () => { selectedPoints = i; localStorage.setItem('selectedPoints', i); generatePointButtons(); };
-            pointsButtonsContainer.appendChild(button);
-        }
-    }
+        socket.on('update-text', ({ name, text }) => {
+            const textEl = document.getElementById(`text-${name}`);
+            if (textEl) textEl.textContent = text;
+        });
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('currentQuestionImage');
-        if (saved) {
-            showPreview(saved);
-            socket.emit('image-updated', saved);
+        function generatePointButtons() {
+            pointsButtonsContainer.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                let buttonClasses = 'w-10 h-10 rounded-lg text-white font-bold transition-colors duration-200';
+                if (i === selectedPoints) {
+                    buttonClasses += ' ring-4 ring-teal-400 ring-offset-2 ring-offset-gray-900 bg-teal-500';
+                } else {
+                    buttonClasses += ' bg-gray-600 hover:bg-teal-500';
+                }
+                button.className = buttonClasses;
+
+                button.addEventListener('click', () => {
+                    selectedPoints = i;
+                    localStorage.setItem('selectedPoints', i);
+                    generatePointButtons(); // Buttons neu zeichnen für aktiven Status
+                });
+                pointsButtonsContainer.appendChild(button);
+            }
         }
-        generatePointButtons();
-    });
-</script>
+
+        // Initialisierung beim Laden
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedImage = localStorage.getItem('currentQuestionImage');
+            if (savedImage) {
+                showPreview(savedImage);
+                socket.emit('image-updated', savedImage); // Bild an Spieler schicken
+            }
+            generatePointButtons();
+        });
+
+        socket.on('disconnect', () => console.log('Disconnected'));
+        socket.on('connect', () => {
+            socket.emit('register-moderator');
+        });
+    </script>
 </body>
 </html>
