@@ -20,33 +20,10 @@ wrongSound.volume = 0.1;
 
 let playerName = null;
 
-// --- Login & LocalStorage Logik ---
-
+// --- Login ---
 window.addEventListener('DOMContentLoaded', () => {
     const savedName = localStorage.getItem('playerName');
-    if (savedName) {
-        playerNameInput.value = savedName;
-    }
-});
-
-// --- Tastatur-Steuerung (Leertaste) ---
-window.addEventListener('keydown', (event) => {
-    // Prüfen, ob die Leertaste gedrückt wurde
-    if (event.key === ' ' || event.code === 'Space') {
-        
-        // WICHTIG: Verhindern, dass der Buzzer auslöst, wenn man gerade im Textfeld schreibt
-        if (document.activeElement === answerInput || document.activeElement === playerNameInput) {
-            return;
-        }
-
-        // Standard-Verhalten der Leertaste (Scrollen) verhindern
-        event.preventDefault();
-
-        // Nur auslösen, wenn der Button nicht deaktiviert ist (also noch niemand gebuzzert hat)
-        if (!buzzerBtn.disabled && playerName) {
-            socket.emit('buzzer-pressed', playerName);
-        }
-    }
+    if (savedName) playerNameInput.value = savedName;
 });
 
 registerPlayerBtn.addEventListener('click', () => {
@@ -62,23 +39,25 @@ registerPlayerBtn.addEventListener('click', () => {
 });
 
 // --- Buzzer Logik ---
-
 buzzerBtn.addEventListener('click', () => {
-    if (playerName) {
-      socket.emit('buzzer-pressed', playerName);
+    if (playerName) socket.emit('buzzer-pressed', playerName);
+});
+
+window.addEventListener('keydown', (event) => {
+    if ((event.key === ' ' || event.code === 'Space') && 
+        document.activeElement !== answerInput && 
+        document.activeElement !== playerNameInput) {
+        event.preventDefault();
+        if (!buzzerBtn.disabled && playerName) socket.emit('buzzer-pressed', playerName);
     }
 });
 
-// Aktualisierter Block für den Schatten
 socket.on('buzzer-locked', (buzzerName) => {
     buzzerSound.play();
     buzzerBtn.disabled = true;
-    buzzerBtn.textContent = buzzerName;
-    
-    // Schatten hinzufügen, um Text vom Bild abzuheben
-    buzzerBtn.style.textShadow = 'rgba(0, 0, 0, 0.8) 2px 2px 10px';
-
+    buzzerBtn.textContent = `${buzzerName}`;
     buzzerBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+
     if (playerName === buzzerName) {
         buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
     } else {
@@ -90,22 +69,31 @@ socket.on('buzzer-locked', (buzzerName) => {
 socket.on('buzzer-unlocked', () => {
     buzzerBtn.disabled = false;
     buzzerBtn.textContent = '';
-    buzzerBtn.style.textShadow = 'none'; // Schatten entfernen
     buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-yellow-500', 'hover:bg-yellow-600');
     buzzerBtn.classList.add('bg-red-500', 'hover:bg-red-600');
     buzzerStatus.classList.add('hidden');
 });
 
-// --- Spieler & Punkte Updates ---
+// --- Bild-Synchronisation ---
+socket.on('push-image', (imgData) => {
+    if (imgData) {
+        buzzerBtn.style.backgroundImage = `url(${imgData})`;
+        buzzerBtn.style.backgroundSize = 'cover';
+        buzzerBtn.style.backgroundPosition = 'center';
+        // Textschatten hinzufügen, damit Name auf Bildern lesbar bleibt
+        buzzerBtn.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+    } else {
+        buzzerBtn.style.backgroundImage = 'none';
+        buzzerBtn.style.textShadow = 'none';
+    }
+});
 
 socket.on('update-players', (updatedPlayers) => {
     playersContainer.innerHTML = '';
     updatedPlayers.forEach((player) => {
         const card = createPlayerCard(player.name, player.score, player.color);
         playersContainer.appendChild(card);
-        if (player.name === playerName) {
-            localStorage.setItem('playerScore', player.score);
-        }
+        if (player.name === playerName) localStorage.setItem('playerScore', player.score);
     });
 });
 
@@ -114,54 +102,29 @@ function createPlayerCard(name, score, color) {
     card.className = 'player-card p-6 flex flex-col items-center text-center';
     const nameEl = document.createElement('h2');
     nameEl.className = 'text-2xl font-bold mb-2';
-    nameEl.textContent = name;
     nameEl.style.color = color;
+    nameEl.textContent = name;
     const scoreEl = document.createElement('p');
     scoreEl.className = 'text-5xl font-extrabold my-4';
-    scoreEl.textContent = score;
     scoreEl.style.color = color;
+    scoreEl.textContent = score;
     card.appendChild(scoreEl);
     card.appendChild(nameEl);
     return card;
 }
 
-// Globaler Reset vom Moderator
-socket.on('scores-reset-globally', () => {
-    localStorage.setItem('playerScore', 0);
-});
+socket.on('scores-reset-globally', () => localStorage.setItem('playerScore', 0));
 
-// Typing-Feature
 if (answerInput) {
-    answerInput.addEventListener('input', () => {
-        socket.emit('player-typing', answerInput.value);
-    });
+    answerInput.addEventListener('input', () => socket.emit('player-typing', answerInput.value));
 }
 
 socket.on('play-correct-sound', () => correctSound.play());
 socket.on('play-wrong-sound', () => wrongSound.play());
 
-// --- Verbindung ---
-
-socket.on('disconnect', () => {
-    buzzerStatus.textContent = 'Verbindung getrennt. Reconnect...';
-    buzzerStatus.classList.remove('hidden');
-    buzzerBtn.disabled = true;
-});
-
 socket.on('connect', () => {
     if (playerName) {
         const savedScore = parseInt(localStorage.getItem('playerScore')) || 0;
         socket.emit('register-player', { name: playerName, score: savedScore });
-    }
-    buzzerStatus.classList.add('hidden');
-});
-
-socket.on('push-image', (imgData) => {
-    if (imgData) {
-        buzzerBtn.style.backgroundImage = `url(${imgData})`;
-        buzzerBtn.style.backgroundSize = 'cover';
-        buzzerBtn.style.backgroundPosition = 'center';
-    } else {
-        buzzerBtn.style.backgroundImage = 'none';
     }
 });
