@@ -81,6 +81,8 @@ socket.on('buzzer-locked', (buzzerName) => {
         // ICH bin dran -> Gelb (auch im Hover)
         buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
         buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+        // NEU: 'glow-effect' hinzugefügt
+        buzzerBtn.classList.add('bg-yellow-400', 'text-gray-900', 'glow-effect');
     } else {
         // ANDERE sind dran -> Grau
         buzzerBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
@@ -97,7 +99,7 @@ socket.on('buzzer-unlocked', () => {
     // NEU: 'glow-effect' wieder entfernt
     buzzerBtn.classList.remove('bg-gray-500', 'bg-yellow-400', 'text-gray-900', 'glow-effect');
     buzzerBtn.classList.add('bg-red-500');
-    
+
     // Alle Zustands-Farben entfernen
     buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-yellow-500', 'hover:bg-yellow-600');
     
