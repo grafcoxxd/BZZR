@@ -78,15 +78,16 @@ socket.on('buzzer-locked', (buzzerName) => {
     buzzerBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
 
     if (playerName === buzzerName) {
+
+        // NEU: Hintergrund der Seite auf Gelb ändern
+        document.body.classList.remove('bg-gray-900');
+        document.body.classList.add('bg-gray-600');
+
         // ICH bin dran -> Gelb (auch im Hover)
         buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-500');
         buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
         // NEU: 'glow-effect' hinzugefügt
         buzzerBtn.classList.add('glow-effect');
-
-       // NEU: Hintergrund der Seite auf Gelb ändern
-       document.body.classList.remove('bg-gray-900');
-       document.body.classList.add('bg-gray-300');
 
     } else {
         // ANDERE sind dran -> Grau
@@ -101,6 +102,10 @@ socket.on('buzzer-unlocked', () => {
     buzzerBtn.disabled = false;
     buzzerBtn.textContent = '';
     
+    // NEU: Hintergrund wieder auf die ursprüngliche Farbe (Dunkelgrau) zurücksetzen
+    document.body.classList.remove('bg-gray-600');
+    document.body.classList.add('bg-gray-900');
+
     // NEU: 'glow-effect' wieder entfernt
     buzzerBtn.classList.remove('bg-gray-500', 'bg-yellow-400', 'text-gray-900', 'glow-effect');
     buzzerBtn.classList.add('bg-red-500');
@@ -108,9 +113,6 @@ socket.on('buzzer-unlocked', () => {
     // Alle Zustands-Farben entfernen
     buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-yellow-500', 'hover:bg-yellow-600');
     
-    // NEU: Hintergrund wieder auf die ursprüngliche Farbe (Dunkelgrau) zurücksetzen
-    document.body.classList.remove('bg-gray-300');
-    document.body.classList.add('bg-gray-900');
 
     // Standard-Farbe (Rot) wiederherstellen
     buzzerBtn.classList.add('bg-red-500', 'hover:bg-red-600');
