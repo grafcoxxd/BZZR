@@ -140,6 +140,17 @@ io.on('connection', (socket) => {
     io.emit('update-players', Array.from(players.values()));
   });
   
+  // Bild-Synchronisation
+  socket.on('image-updated', (imgData) => {
+    // Sende das Bild an alle verbundenen Clients (Spieler)
+    io.emit('push-image', imgData);
+  });
+
+  socket.on('image-removed', () => {
+    // Signal zum Löschen des Bildes an alle
+    io.emit('push-image', null);
+  });
+
 });
 
 const PORT = process.env.PORT || 3000;

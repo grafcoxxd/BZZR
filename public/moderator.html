@@ -27,7 +27,6 @@
 </div>
 
 <div class="flex flex-col items-center w-full my-8">
-    
     <div id="uploadContainer" class="w-full max-w-md">
         <label id="dropZone" class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800/50 hover:bg-gray-800 hover:border-teal-500 transition-all duration-300">
             <div class="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
@@ -112,8 +111,77 @@
         correctSound.volume = 0.1;
         wrongSound.volume = 0.1;
 
-        let players = [];
         let selectedPoints = localStorage.getItem('selectedPoints') ? parseInt(localStorage.getItem('selectedPoints')) : 0;
+
+        // --- Bild Logik mit Server-Push ---
+        function handleFile(file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Das Bild ist zu groß (max. 2MB).");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imgData = event.target.result;
+                localStorage.setItem('currentQuestionImage', imgData);
+                socket.emit('image-updated', imgData); // An Server senden
+                showPreview(imgData);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showPreview(src) {
+            imagePreview.src = src;
+            previewContainer.classList.remove('hidden');
+            uploadContainer.classList.add('hidden');
+        }
+
+        function hidePreview() {
+            imagePreview.src = "";
+            previewContainer.classList.add('hidden');
+            uploadContainer.classList.remove('hidden');
+            imageUpload.value = "";
+            localStorage.removeItem('currentQuestionImage');
+            socket.emit('image-removed'); // Server sagen: Bild weg
+        }
+
+        deleteImageBtn.addEventListener('click', hidePreview);
+
+        imageUpload.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+
+        // Klick auf Vorschau triggert ebenfalls Datei-Auswahl
+        previewDropZone.addEventListener('click', () => imageUpload.click());
+
+        // Drag & Drop für beide Zonen
+        const zones = [dropZone, previewDropZone];
+        zones.forEach(zone => {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            zone.addEventListener('dragenter', () => {
+                if (zone === dropZone) zone.classList.add('border-teal-400', 'bg-gray-700');
+                if (zone === previewDropZone) replaceOverlay.classList.remove('opacity-0');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                if (zone === dropZone) zone.classList.remove('border-teal-400', 'bg-gray-700');
+                if (zone === previewDropZone) replaceOverlay.classList.add('opacity-0');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                replaceOverlay.classList.add('opacity-0');
+                dropZone.classList.remove('border-teal-400', 'bg-gray-700');
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    handleFile(file);
+                }
+            });
+        });
 
         // --- Buzzer & Moderator Logik ---
         socket.on('buzzer-winner', (name) => {
@@ -127,6 +195,8 @@
         correctBtn.addEventListener('click', () => {
             if (selectedPoints > 0) {
                 socket.emit('moderator-correct', selectedPoints);
+            } else {
+                alert("Bitte wähle zuerst eine Punktzahl aus!");
             }
         });
 
@@ -201,6 +271,7 @@
         });
 
         function generatePointButtons() {
+            pointsButtonsContainer.innerHTML = '';
             for (let i = 1; i <= 10; i++) {
                 const button = document.createElement('button');
                 button.textContent = i;
@@ -213,102 +284,28 @@
                 button.className = buttonClasses;
 
                 button.addEventListener('click', () => {
-                    document.querySelectorAll('#pointsButtons button').forEach(btn => {
-                        btn.classList.remove('ring-4', 'ring-teal-400', 'ring-offset-2', 'ring-offset-gray-900', 'bg-teal-500');
-                        btn.classList.add('bg-gray-600');
-                    });
-                    button.classList.add('ring-4', 'ring-teal-400', 'ring-offset-2', 'ring-offset-gray-900', 'bg-teal-500');
-                    button.classList.remove('bg-gray-600');
                     selectedPoints = i;
                     localStorage.setItem('selectedPoints', i);
+                    generatePointButtons(); // Buttons neu zeichnen für aktiven Status
                 });
                 pointsButtonsContainer.appendChild(button);
             }
         }
-        generatePointButtons();
 
-        // --- Bild Upload & Drag-Drop Logik ---
-
-        function handleFile(file) {
-            if (file.size > 2 * 1024 * 1024) {
-                alert("Das Bild ist zu groß (max. 2MB).");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const imgData = event.target.result;
-                localStorage.setItem('currentQuestionImage', imgData);
-                showPreview(imgData);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function showPreview(src) {
-            imagePreview.src = src;
-            previewContainer.classList.remove('hidden');
-            uploadContainer.classList.add('hidden');
-        }
-
-        function hidePreview() {
-            imagePreview.src = "";
-            previewContainer.classList.add('hidden');
-            uploadContainer.classList.remove('hidden');
-            imageUpload.value = "";
-            localStorage.removeItem('currentQuestionImage');
-        }
-
-        deleteImageBtn.addEventListener('click', hidePreview);
-
-        imageUpload.addEventListener('change', (e) => {
-            if (e.target.files[0]) handleFile(e.target.files[0]);
-        });
-
-        // Klick auf Vorschau triggert ebenfalls Datei-Auswahl
-        previewDropZone.addEventListener('click', () => imageUpload.click());
-
-        // Drag & Drop für beide Zonen
-        const zones = [dropZone, previewDropZone];
-        zones.forEach(zone => {
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                zone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, false);
-            });
-
-            zone.addEventListener('dragenter', () => {
-                if (zone === dropZone) zone.classList.add('border-teal-400', 'bg-gray-700');
-                if (zone === previewDropZone) replaceOverlay.classList.remove('opacity-0');
-            });
-
-            zone.addEventListener('dragleave', () => {
-                if (zone === dropZone) zone.classList.remove('border-teal-400', 'bg-gray-700');
-                if (zone === previewDropZone) replaceOverlay.classList.add('opacity-0');
-            });
-
-            zone.addEventListener('drop', (e) => {
-                replaceOverlay.classList.add('opacity-0');
-                dropZone.classList.remove('border-teal-400', 'bg-gray-700');
-                const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    handleFile(file);
-                }
-            });
-        });
-
-        // Initialisierung
+        // Initialisierung beim Laden
         window.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('currentQuestionImage');
-            if (saved) showPreview(saved);
+            const savedImage = localStorage.getItem('currentQuestionImage');
+            if (savedImage) {
+                showPreview(savedImage);
+                socket.emit('image-updated', savedImage); // Bild an Spieler schicken
+            }
+            generatePointButtons();
         });
 
-        // Verbindung
         socket.on('disconnect', () => console.log('Disconnected'));
         socket.on('connect', () => {
-            console.log('Reconnected');
             socket.emit('register-moderator');
         });
-
     </script>
 </body>
 </html>

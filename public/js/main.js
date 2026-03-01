@@ -163,3 +163,15 @@ socket.on('connect', () => {
     }
     buzzerStatus.classList.add('hidden');
 });
+
+socket.on('push-image', (imgData) => {
+    if (imgData) {
+        // Bild als Hintergrund setzen
+        buzzerBtn.style.backgroundImage = `url(${imgData})`;
+        buzzerBtn.style.backgroundSize = 'cover';
+        buzzerBtn.style.backgroundPosition = 'center';
+    } else {
+        // Hintergrund entfernen
+        buzzerBtn.style.backgroundImage = 'none';
+    }
+});
