@@ -84,7 +84,7 @@ socket.on('buzzer-locked', (buzzerName) => {
         //document.body.classList.add('bg-slate-900');
 
         // ICH bin dran -> Gelb (auch im Hover)
-        //buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-500');
+        buzzerBtn.classList.add('bg-red-600', 'hover:bg-red-600');
        // buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
         // NEU: 'glow-effect' hinzugefügt
         buzzerBtn.classList.add('glow-effect');
@@ -107,15 +107,15 @@ socket.on('buzzer-unlocked', () => {
     //document.body.classList.add('bg-gray-900');
 
     // NEU: 'glow-effect' wieder entfernt
-    buzzerBtn.classList.remove('bg-gray-500', 'bg-yellow-400', 'text-gray-900', 'glow-effect');
+    buzzerBtn.classList.remove('bg-gray-500', 'bg-red-600', 'text-gray-900', 'glow-effect');
     buzzerBtn.classList.add('bg-red-500');
 
     // Alle Zustands-Farben entfernen
-    buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-yellow-500', 'hover:bg-yellow-600');
+    buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-teal-500', 'hover:bg-red-600');
     
 
     // Standard-Farbe (Rot) wiederherstellen
-    buzzerBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+    buzzerBtn.classList.add('bg-red-500', 'hover:bg-red-500');
     
     buzzerStatus.textContent = '';
     buzzerStatus.classList.add('hidden');
