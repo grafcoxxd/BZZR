@@ -25,10 +25,17 @@
     </button>
 </div>
 
-<div class="flex gap-2 items-center bg-gray-800 p-2 rounded-lg">
-    <input type="file" id="imageUpload" accept="image/*" class="hidden">
-    <button onclick="document.getElementById('imageUpload').click()" class="bg-blue-500 p-2 rounded text-sm">Bild wählen</button>
-    <button id="hideImgBtn" class="bg-red-500 p-2 rounded text-sm hidden">Bild ausblenden</button>
+<div class="w-full max-w-2xl mt-4 px-4">
+    <div class="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-700">
+        <label class="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded-md transition text-sm">
+             Bilder auswählen
+            <input type="file" id="imageUpload" accept="image/*" multiple class="hidden">
+        </label>
+        <p class="text-gray-400 text-xs">Vorschau für Fragen-Bilder:</p>
+    </div>
+    
+    <div id="imagePreviewContainer" class="flex flex-wrap gap-3 mt-4 justify-center">
+        </div>
 </div>
 
     <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
@@ -74,8 +81,7 @@
         const correctSound = document.getElementById('correctSound');
         const wrongSound = document.getElementById('wrongSound');
         const imageUpload = document.getElementById('imageUpload');
-        const hideImgBtn = document.getElementById('hideImgBtn');
-
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
         buzzerSound.volume = 0.17;
         correctSound.volume = 0.1;
         wrongSound.volume = 0.1;
@@ -113,24 +119,6 @@
             }
         });
 
-        imageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    socket.emit('moderator-show-image', event.target.result);
-                    hideImgBtn.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        hideImgBtn.addEventListener('click', () => {
-            socket.emit('moderator-hide-image');
-            hideImgBtn.classList.add('hidden');
-            imageUpload.value = ""; // Reset
-        });
-        
         socket.on('buzzer-unlocked', () => {
             buzzerWinner.textContent = '';
             buzzerWinner.classList.add('hidden');
@@ -239,6 +227,58 @@
             // Registriere den Moderator erneut beim Server
             socket.emit('register-moderator');
         });
+
+
+// Bilder beim Laden aus dem LocalStorage wiederherstellen
+window.addEventListener('DOMContentLoaded', () => {
+    const savedImages = JSON.parse(localStorage.getItem('modImages') || '[]');
+    savedImages.forEach(imgData => displayImage(imgData));
+});
+
+imageUpload.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const imgData = event.target.result;
+            
+            // Im LocalStorage speichern
+            const savedImages = JSON.parse(localStorage.getItem('modImages') || '[]');
+            savedImages.push(imgData);
+            localStorage.setItem('modImages', JSON.stringify(savedImages));
+            
+            displayImage(imgData);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+function displayImage(imgData) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative group';
+
+    const img = document.createElement('img');
+    img.src = imgData;
+    img.className = 'h-24 w-24 object-cover rounded-lg border-2 border-gray-700 hover:border-teal-400 cursor-pointer transition';
+    
+    // Klick auf das Bild zum Vergrößern (optional) oder Löschen
+    img.onclick = () => {
+        if(confirm("Bild aus der Vorschau löschen?")) {
+            removeImage(imgData, wrapper);
+        }
+    };
+
+    wrapper.appendChild(img);
+    imagePreviewContainer.appendChild(wrapper);
+}
+
+function removeImage(imgData, element) {
+    let savedImages = JSON.parse(localStorage.getItem('modImages') || '[]');
+    savedImages = savedImages.filter(data => data !== imgData);
+    localStorage.setItem('modImages', JSON.stringify(savedImages));
+    element.remove();
+} 
     </script>
 </body>
 </html>
