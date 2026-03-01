@@ -79,10 +79,10 @@ socket.on('buzzer-locked', (buzzerName) => {
 
     if (playerName === buzzerName) {
         // ICH bin dran -> Gelb (auch im Hover)
-        buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+        buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-500');
         buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
         // NEU: 'glow-effect' hinzugefügt
-        buzzerBtn.classList.add('bg-yellow-400', 'text-gray-900', 'glow-effect');
+        buzzerBtn.classList.add('glow-effect');
     } else {
         // ANDERE sind dran -> Grau
         buzzerBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
