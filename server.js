@@ -18,12 +18,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 let buzzerLocked = false;
 let buzzerWinnerName = null;
 let players = new Map();
+let currentImage = null; // Speichert das aktuelle Bild
 
 io.on('connection', (socket) => {
   console.log('Ein Benutzer ist verbunden');
 
   if (buzzerLocked) {
     socket.emit('buzzer-locked', buzzerWinnerName);
+  }
+
+  // NEU: Dem neuen Client das aktuelle Bild senden
+  if (currentImage) {
+    socket.emit('push-image', currentImage);
   }
 
   socket.on('register-moderator', () => {
@@ -142,11 +148,13 @@ io.on('connection', (socket) => {
   
   // Bild-Synchronisation
   socket.on('image-updated', (imgData) => {
+    currentImage = imgData; // Bild speichern
     // Sende das Bild an alle verbundenen Clients (Spieler)
     io.emit('push-image', imgData);
   });
 
   socket.on('image-removed', () => {
+    currentImage = null; // Bild löschen
     // Signal zum Löschen des Bildes an alle
     io.emit('push-image', null);
   });
