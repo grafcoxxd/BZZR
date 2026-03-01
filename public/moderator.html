@@ -266,6 +266,7 @@ imageUpload.addEventListener('change', (e) => {
 deleteImageBtn.addEventListener('click', () => {
     localStorage.removeItem('currentQuestionImage');
     hidePreview();
+    dropZone.classList.remove('hidden');
 });
 
 function showPreview(src) {
@@ -324,6 +325,7 @@ function handleFile(file) {
     const reader = new FileReader();
     reader.onload = (event) => {
         const imgData = event.target.result;
+        dropZone.classList.add('hidden');
         localStorage.setItem('currentQuestionImage', imgData);
         showPreview(imgData);
     };
