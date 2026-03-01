@@ -17,69 +17,49 @@
             border-radius: 1rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
-        /* Schüttel-Animation für den gesamten Bildschirm */
-        @keyframes screen-shake {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(5px, -5px); }
-            50% { transform: translate(-5px, 5px); }
-            75% { transform: translate(5px, 5px); }
-            100% { transform: translate(0, 0); }
+        .correct-btn {
+            background-color: #38a169;
         }
-        .apply-shake {
-            animation: screen-shake 0.2s ease-in-out 2;
+        .wrong-btn {
+            background-color: #e53e3e;
         }
-
-        /* Druckwellen-Animation */
-        @keyframes shockwave-anim {
-            0% { transform: scale(0.5); opacity: 1; border-width: 20px; }
-            100% { transform: scale(4); opacity: 0; border-width: 1px; }
-        }
-        .shockwave {
-            position: fixed; /* Fixiert auf den Viewport, stört das Layout nicht */
-            top: 40%; /* Ungefähre Höhe des Buzzers */
-            left: 50%;
-            margin-left: -150px;
-            margin-top: -150px;
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            border: 8px solid white;
-            pointer-events: none; /* Klicks gehen durch das Element hindurch */
-            opacity: 0;
-            z-index: 100;
-        }
-        .animate-shock {
-            animation: shockwave-anim 0.6s ease-out;
+        .score-adjust-btn {
+            background-color: #4a5568;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body id="mainBody" class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4">
-
-    <div id="shockwave" class="shockwave"></div>
-
-    <div id="nameEntry" class="w-full max-w-sm flex flex-col items-center gap-4 mt-10">
-        <input type="text" id="playerNameInput" placeholder="Dein Name" class="flex-grow p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 text-center">
-        <button id="registerPlayerBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
-            Beitreten
-        </button>
-    </div>
-
-    <div id="buzzer-section" class="flex flex-col items-center hidden">
-        <button id="buzzerBtn" style="box-shadow: 2px 2px 8px 5px rgba(0,0,0,0.15);" class="bg-red-500 hover:bg-red-600 text-white font-bold mt-20 mb-10 p-20 rounded-full text-4xl sm:text-6xl transition-all duration-300 transform hover:scale-105 min-h-[400px] min-w-[400px]">
-           </button>
-        <p id="buzzerStatus" class="text-xl text-yellow-300 font-semibold text-center"></p>
-        <input type="text" id="answerInput" placeholder="Deine Antwort" class="w-full max-w-sm mt-4 p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 text-center hidden">
-    </div>
-
-    <div id="playersContainer" class="flex flex-wrap justify-center gap-4 mt-10 w-full max-w-4xl"></div>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
 
     <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
     <audio id="correctSound" src="/sounds/correct.mp3"></audio>
     <audio id="wrongSound" src="/sounds/wrong.mp3"></audio>
 
+    <div id="game-container" class="w-full flex flex-col items-center justify-between">
+        <div id="nameEntry" class="w-full max-w-sm flex flex-col items-center gap-4 mt-10">
+            <input type="text" id="playerNameInput" placeholder="Dein Name" class="flex-grow p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 text-center">
+            <button id="registerPlayerBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                Beitreten
+            </button>
+        </div>
+    
+        <div id="buzzer-section" class="flex flex-col items-center hidden">
+            <button id="buzzerBtn" style="box-shadow: 2px 2px 8px 5px rgba(0,0,0,0.15);" class="bg-red-500 hover:bg-red-600 text-white font-bold mt-20 mb-10 p-20 rounded-full text-4xl sm:text-6xl transition-all duration-300 transform hover:scale-105 min-h-[400px] min-w-[400px]">
+               
+            </button>
+            <p id="buzzerStatus" class="text-xl text-yellow-300 font-semibold text-center"></p>
+            <input type="text" id="answerInput" placeholder="Deine Antwort" class="w-full max-w-sm mt-4 p-3 rounded-lg bg-gray-700 border border-gray-600 text-white font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 text-center mb-10">
+        </div>
+    
+        <div id="playersContainer" class="flex flex-wrap justify-center gap-6 p-4 w-full mt-auto">
+        </div>
+    </div>
+    
     <script src="/socket.io/socket.io.js"></script>
-    <script src="main.js"></script>
+    <script src="/js/main.js"></script>
+    
 </body>
 </html>
