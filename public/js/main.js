@@ -75,17 +75,17 @@ socket.on('buzzer-locked', (buzzerName) => {
     buzzerBtn.textContent = `${buzzerName}`;
     
     // Basis-Farbe (Rot) entfernen
-    buzzerBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+   // buzzerBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
 
     if (playerName === buzzerName) {
 
         // NEU: Hintergrund der Seite auf Gelb ändern
         document.body.classList.remove('bg-gray-900');
-        document.body.classList.add('bg-slate-600');
+        document.body.classList.add('bg-sky-700');
 
         // ICH bin dran -> Gelb (auch im Hover)
-        buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-500');
-        buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+        //buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-500');
+       // buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
         // NEU: 'glow-effect' hinzugefügt
         buzzerBtn.classList.add('glow-effect');
 
@@ -103,7 +103,7 @@ socket.on('buzzer-unlocked', () => {
     buzzerBtn.textContent = '';
     
     // NEU: Hintergrund wieder auf die ursprüngliche Farbe (Dunkelgrau) zurücksetzen
-    document.body.classList.remove('bg-slate-600');
+    document.body.classList.remove('bg-sky-700');
     document.body.classList.add('bg-gray-900');
 
     // NEU: 'glow-effect' wieder entfernt
