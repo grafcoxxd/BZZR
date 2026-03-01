@@ -29,6 +29,26 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- Tastatur-Steuerung (Leertaste) ---
+window.addEventListener('keydown', (event) => {
+    // Prüfen, ob die Leertaste gedrückt wurde
+    if (event.key === ' ' || event.code === 'Space') {
+        
+        // WICHTIG: Verhindern, dass der Buzzer auslöst, wenn man gerade im Textfeld schreibt
+        if (document.activeElement === answerInput || document.activeElement === playerNameInput) {
+            return;
+        }
+
+        // Standard-Verhalten der Leertaste (Scrollen) verhindern
+        event.preventDefault();
+
+        // Nur auslösen, wenn der Button nicht deaktiviert ist (also noch niemand gebuzzert hat)
+        if (!buzzerBtn.disabled && playerName) {
+            socket.emit('buzzer-pressed', playerName);
+        }
+    }
+});
+
 registerPlayerBtn.addEventListener('click', () => {
     const name = playerNameInput.value.trim();
     if (name) {
