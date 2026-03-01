@@ -80,8 +80,8 @@ socket.on('buzzer-locked', (buzzerName) => {
     if (playerName === buzzerName) {
 
         // NEU: Hintergrund der Seite auf Gelb ändern
-        document.body.classList.remove('bg-gray-900');
-        document.body.classList.add('bg-slate-900');
+        //document.body.classList.remove('bg-gray-900');
+        //document.body.classList.add('bg-slate-900');
 
         // ICH bin dran -> Gelb (auch im Hover)
         //buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-500');
@@ -103,8 +103,8 @@ socket.on('buzzer-unlocked', () => {
     buzzerBtn.textContent = '';
     
     // NEU: Hintergrund wieder auf die ursprüngliche Farbe (Dunkelgrau) zurücksetzen
-    document.body.classList.remove('bg-slate-900');
-    document.body.classList.add('bg-gray-900');
+    //document.body.classList.remove('bg-slate-900');
+    //document.body.classList.add('bg-gray-900');
 
     // NEU: 'glow-effect' wieder entfernt
     buzzerBtn.classList.remove('bg-gray-500', 'bg-yellow-400', 'text-gray-900', 'glow-effect');
