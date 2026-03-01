@@ -162,8 +162,29 @@ if (answerInput) {
     });
 }
 
-socket.on('play-correct-sound', () => correctSound.play());
-socket.on('play-wrong-sound', () => wrongSound.play());
+socket.on('play-correct-sound', () => {
+    correctSound.play();
+
+    // Klasse für grünes Blitzen hinzufügen
+    document.body.classList.add('animate-flash-green');
+    
+    // Klasse nach der Animation wieder entfernen, damit sie beim nächsten Mal erneut triggert
+    setTimeout(() => {
+        document.body.classList.remove('animate-flash-green');
+    }, 800);
+});
+
+socket.on('play-wrong-sound', () => {
+    wrongSound.play()
+
+    // Klasse für rotes Blitzen hinzufügen
+    document.body.classList.add('animate-flash-red');
+    
+    // Klasse nach der Animation wieder entfernen
+    setTimeout(() => {
+        document.body.classList.remove('animate-flash-red');
+    }, 800);
+});
 
 // --- Verbindung ---
 
