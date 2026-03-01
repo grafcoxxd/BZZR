@@ -10,14 +10,15 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
         .unselectable {
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-    }
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
 <div class="flex flex-wrap justify-center items-center gap-6 p-4 w-full">
     <h1 class="text-4xl sm:text-5xl font-bold text-center text-teal-200">Mod Office</h1>
     <button id="resetBtn" class="bg-gray-500 hover:bg-gray-600 rounded-lg transition duration-300 max-w-[45px] h-[45px] flex-1 text-teal-200 text-4xl">
@@ -26,22 +27,26 @@
 </div>
 
 <div class="flex flex-col items-center w-full my-8">
-<div id="uploadContainer" class="w-full max-w-md">
-    <label id="dropZone" class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800/50 hover:bg-gray-800 hover:border-teal-500 transition-all duration-300">
-        <div class="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
-            <span class="text-3xl mb-2 group-hover:scale-110 transition-transform duration-300">🖼️</span>
-            <p class="text-sm text-gray-400 group-hover:text-teal-400 font-medium text-center px-4">
-                Bild hierher ziehen oder klicken
-            </p>
-            <p class="text-xs text-gray-500 mt-1">PNG, JPG oder GIF</p>
-        </div>
-        <input type="file" id="imageUpload" accept="image/*" class="hidden">
-    </label>
-</div>
+    
+    <div id="uploadContainer" class="w-full max-w-md">
+        <label id="dropZone" class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800/50 hover:bg-gray-800 hover:border-teal-500 transition-all duration-300">
+            <div class="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
+                <span class="text-3xl mb-2 group-hover:scale-110 transition-transform duration-300">🖼️</span>
+                <p class="text-sm text-gray-400 group-hover:text-teal-400 font-medium text-center px-4">
+                    Bild hierher ziehen oder klicken
+                </p>
+            </div>
+            <input type="file" id="imageUpload" accept="image/*" class="hidden">
+        </label>
+    </div>
 
     <div id="previewContainer" class="relative hidden group mt-2">
-        <div class="relative p-1 bg-gradient-to-tr from-teal-500 to-blue-500 rounded-2xl shadow-2xl">
-            <img id="imagePreview" src="" alt="Vorschau" class="max-h-64 rounded-xl border-4 border-gray-900 object-contain shadow-inner">
+        <div id="previewDropZone" class="relative p-1 bg-gradient-to-tr from-teal-500 to-blue-500 rounded-2xl shadow-2xl cursor-pointer hover:brightness-110 transition-all">
+            <img id="imagePreview" src="" alt="Vorschau" class="max-h-64 rounded-xl border-4 border-gray-900 object-contain shadow-inner pointer-events-none">
+            
+            <div id="replaceOverlay" class="absolute inset-0 bg-teal-500/40 rounded-xl flex items-center justify-center opacity-0 transition-opacity pointer-events-none">
+                <p class="text-white font-bold bg-gray-900/80 px-4 py-2 rounded-full shadow-lg">Bild ersetzen</p>
+            </div>
         </div>
         
         <button id="deleteImageBtn" class="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-gray-900 transition-transform hover:scale-110 active:scale-95 z-10">
@@ -72,11 +77,9 @@
         </div>
     </div>
 
-    <div id="pointsButtons" class="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-4">
-    </div>
+    <div id="pointsButtons" class="grid grid-cols-5 sm:grid-cols-10 gap-2 mb-4"></div>
 
-    <div id="playersContainer" class="flex flex-wrap justify-center gap-6 p-4 w-full">
-    </div>
+    <div id="playersContainer" class="flex flex-wrap justify-center gap-6 p-4 w-full"></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -94,12 +97,17 @@
         const buzzerSound = document.getElementById('buzzerSound');
         const correctSound = document.getElementById('correctSound');
         const wrongSound = document.getElementById('wrongSound');
+        
+        // Bild-Elemente
         const imageUpload = document.getElementById('imageUpload');
         const previewContainer = document.getElementById('previewContainer');
         const imagePreview = document.getElementById('imagePreview');
         const deleteImageBtn = document.getElementById('deleteImageBtn');
-        const uploadLabel = document.getElementById('uploadLabel');
+        const uploadContainer = document.getElementById('uploadContainer');
         const dropZone = document.getElementById('dropZone');
+        const previewDropZone = document.getElementById('previewDropZone');
+        const replaceOverlay = document.getElementById('replaceOverlay');
+
         buzzerSound.volume = 0.17;
         correctSound.volume = 0.1;
         wrongSound.volume = 0.1;
@@ -107,6 +115,7 @@
         let players = [];
         let selectedPoints = localStorage.getItem('selectedPoints') ? parseInt(localStorage.getItem('selectedPoints')) : 0;
 
+        // --- Buzzer & Moderator Logik ---
         socket.on('buzzer-winner', (name) => {
             buzzerSound.play();
             buzzerWinner.textContent = `${name}`;
@@ -126,11 +135,9 @@
         });
 
         resetBtn.addEventListener('click', () => {
-            // Sende das neue Event an den Server
             socket.emit('reset-buzzer');
         });
 
-        // Doppelklick: Alle Punkte löschen
         resetBtn.addEventListener('dblclick', () => {
             if (confirm("Möchtest du wirklich ALLE Punkte aller Spieler löschen?")) {
                 socket.emit('moderator-reset-all-scores');
@@ -144,14 +151,10 @@
             moderatorControls.classList.add('hidden');
         });
         
-        socket.on('play-correct-sound', () => {
-            correctSound.play();
-        });
+        socket.on('play-correct-sound', () => correctSound.play());
+        socket.on('play-wrong-sound', () => wrongSound.play());
 
-        socket.on('play-wrong-sound', () => {
-            wrongSound.play();
-        });
-
+        // --- Spieler Anzeige ---
         function createPlayerCard(name, score, text = '', color) {
             const card = document.createElement('div');
             card.className = 'player-card p-6 flex flex-col items-center text-center';
@@ -162,13 +165,11 @@
             nameEl.style.color = color;
 
             const scoreEl = document.createElement('p');
-            scoreEl.className = 'text-5xl font-extrabold my-4 text-teal-400 cursor-pointer unselectable';
+            scoreEl.className = 'text-5xl font-extrabold my-4 cursor-pointer unselectable';
             scoreEl.textContent = score;
             scoreEl.style.color = color;
 
-            scoreEl.onclick = () => {
-                socket.emit('add-point-to-player', name);
-            };
+            scoreEl.onclick = () => socket.emit('add-point-to-player', name);
             scoreEl.oncontextmenu = (e) => {
                 e.preventDefault();
                 socket.emit('subtract-point-from-player', name);
@@ -196,16 +197,13 @@
 
         socket.on('update-text', ({ name, text }) => {
             const textEl = document.getElementById(`text-${name}`);
-            if (textEl) {
-                textEl.textContent = text;
-            }
+            if (textEl) textEl.textContent = text;
         });
 
         function generatePointButtons() {
             for (let i = 1; i <= 10; i++) {
                 const button = document.createElement('button');
                 button.textContent = i;
-
                 let buttonClasses = 'w-10 h-10 rounded-lg text-white font-bold transition-colors duration-200';
                 if (i === selectedPoints) {
                     buttonClasses += ' ring-4 ring-teal-400 ring-offset-2 ring-offset-gray-900 bg-teal-500';
@@ -219,118 +217,97 @@
                         btn.classList.remove('ring-4', 'ring-teal-400', 'ring-offset-2', 'ring-offset-gray-900', 'bg-teal-500');
                         btn.classList.add('bg-gray-600');
                     });
-                    
                     button.classList.add('ring-4', 'ring-teal-400', 'ring-offset-2', 'ring-offset-gray-900', 'bg-teal-500');
                     button.classList.remove('bg-gray-600');
-
                     selectedPoints = i;
                     localStorage.setItem('selectedPoints', i);
                 });
                 pointsButtonsContainer.appendChild(button);
             }
         }
-        
         generatePointButtons();
 
+        // --- Bild Upload & Drag-Drop Logik ---
 
+        function handleFile(file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Das Bild ist zu groß (max. 2MB).");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imgData = event.target.result;
+                localStorage.setItem('currentQuestionImage', imgData);
+                showPreview(imgData);
+            };
+            reader.readAsDataURL(file);
+        }
 
-        // Ereignis-Listener für Verbindungsabbruch und -wiederherstellung
-        socket.on('disconnect', () => {
-            console.log('Disconnected');
-            // Zeige eine Nachricht an, dass die Verbindung getrennt ist
+        function showPreview(src) {
+            imagePreview.src = src;
+            previewContainer.classList.remove('hidden');
+            uploadContainer.classList.add('hidden');
+        }
+
+        function hidePreview() {
+            imagePreview.src = "";
+            previewContainer.classList.add('hidden');
+            uploadContainer.classList.remove('hidden');
+            imageUpload.value = "";
+            localStorage.removeItem('currentQuestionImage');
+        }
+
+        deleteImageBtn.addEventListener('click', hidePreview);
+
+        imageUpload.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
         });
 
+        // Klick auf Vorschau triggert ebenfalls Datei-Auswahl
+        previewDropZone.addEventListener('click', () => imageUpload.click());
+
+        // Drag & Drop für beide Zonen
+        const zones = [dropZone, previewDropZone];
+        zones.forEach(zone => {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            zone.addEventListener('dragenter', () => {
+                if (zone === dropZone) zone.classList.add('border-teal-400', 'bg-gray-700');
+                if (zone === previewDropZone) replaceOverlay.classList.remove('opacity-0');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                if (zone === dropZone) zone.classList.remove('border-teal-400', 'bg-gray-700');
+                if (zone === previewDropZone) replaceOverlay.classList.add('opacity-0');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                replaceOverlay.classList.add('opacity-0');
+                dropZone.classList.remove('border-teal-400', 'bg-gray-700');
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    handleFile(file);
+                }
+            });
+        });
+
+        // Initialisierung
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('currentQuestionImage');
+            if (saved) showPreview(saved);
+        });
+
+        // Verbindung
+        socket.on('disconnect', () => console.log('Disconnected'));
         socket.on('connect', () => {
             console.log('Reconnected');
-            // Registriere den Moderator erneut beim Server
             socket.emit('register-moderator');
         });
-
-
-// Beim Laden: Gespeichertes Bild aus LocalStorage holen
-window.addEventListener('DOMContentLoaded', () => {
-    const savedImage = localStorage.getItem('currentQuestionImage');
-    if (savedImage) {
-        showPreview(savedImage);
-    }
-});
-
-// Bild hochladen & Bestehendes überschreiben
-imageUpload.addEventListener('change', (e) => {
-    if (e.target.files[0]) {
-        handleFile(e.target.files[0]);
-    }
-});
-
-// Bild löschen
-deleteImageBtn.addEventListener('click', () => {
-    localStorage.removeItem('currentQuestionImage');
-    hidePreview();
-    dropZone.classList.remove('hidden');
-});
-
-function showPreview(src) {
-    imagePreview.src = src;
-    previewContainer.classList.remove('hidden');
-    uploadLabel.classList.add('hidden'); 
-}
-
-function hidePreview() {
-    imagePreview.src = "";
-    previewContainer.classList.add('hidden');
-    uploadLabel.classList.remove('hidden');
-    imageUpload.value = ""; 
-}
-
-// Verhindert Standard-Browser-Verhalten (Bild im Tab öffnen)
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    }, false);
-});
-
-// Optisches Feedback, wenn Datei über der Zone schwebt
-['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => {
-        dropZone.classList.add('border-teal-400', 'bg-gray-700');
-    }, false);
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => {
-        dropZone.classList.remove('border-teal-400', 'bg-gray-700');
-    }, false);
-});
-
-// Datei-Drop verarbeiten
-dropZone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const file = dt.files[0];
-
-    if (file && file.type.startsWith('image/')) {
-        handleFile(file);
-    } else {
-        alert("Bitte nur Bilder hochladen!");
-    }
-});
-
-// Gemeinsame Funktion für Upload & Drag-Drop
-function handleFile(file) {
-    if (file.size > 2 * 1024 * 1024) {
-        alert("Das Bild ist zu groß (max. 2MB).");
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        const imgData = event.target.result;
-        dropZone.classList.add('hidden');
-        localStorage.setItem('currentQuestionImage', imgData);
-        showPreview(imgData);
-    };
-    reader.readAsDataURL(file);
-}
 
     </script>
 </body>
