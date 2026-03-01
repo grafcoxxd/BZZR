@@ -39,10 +39,8 @@ window.addEventListener('keydown', (event) => {
             return;
         }
 
-        // Standard-Verhalten der Leertaste (Scrollen) verhindern
-        event.preventDefault();
-
-        // Nur auslösen, wenn der Button nicht deaktiviert ist (also noch niemand gebuzzert hat)
+        event.preventDefault(); 
+        
         if (!buzzerBtn.disabled && playerName) {
             socket.emit('buzzer-pressed', playerName);
         }
@@ -54,63 +52,66 @@ registerPlayerBtn.addEventListener('click', () => {
     if (name) {
         playerName = name;
         localStorage.setItem('playerName', name);
+        
         const savedScore = parseInt(localStorage.getItem('playerScore')) || 0;
         socket.emit('register-player', { name: playerName, score: savedScore });
+        
         nameEntryDiv.classList.add('hidden');
         buzzerSectionDiv.classList.remove('hidden');
     }
 });
 
-// --- Buzzer Logik ---
-
 buzzerBtn.addEventListener('click', () => {
     if (playerName) {
-      socket.emit('buzzer-pressed', playerName);
+        socket.emit('buzzer-pressed', playerName);
     }
 });
+
+// --- Socket Events ---
 
 socket.on('buzzer-locked', (buzzerName) => {
     buzzerSound.play();
     buzzerBtn.disabled = true;
-    buzzerBtn.textContent = `${buzzerName}`;
+    buzzerBtn.textContent = buzzerName;
     
-    // Basis-Farbe (Rot) entfernen
-    buzzerBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
-
+    // Prüfen: Bin ICH der Gewinner?
     if (playerName === buzzerName) {
-        // ICH bin dran -> Gelb (auch im Hover)
-        buzzerBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-        buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+        buzzerBtn.classList.remove('bg-red-500');
+        // NEU: 'glow-effect' hinzugefügt
+        buzzerBtn.classList.add('bg-yellow-400', 'text-gray-900', 'glow-effect');
+        buzzerStatus.textContent = 'DU HAST DEN BUZZER!';
+        answerInput.classList.remove('hidden');
+        answerInput.focus();
     } else {
-        // ANDERE sind dran -> Grau
-        buzzerBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
-        buzzerBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+        buzzerBtn.classList.remove('bg-red-500');
+        buzzerBtn.classList.add('bg-gray-500');
+        buzzerStatus.textContent = `${buzzerName} war schneller!`;
     }
-    
+
     buzzerStatus.classList.remove('hidden');
 });
 
 socket.on('buzzer-unlocked', () => {
     buzzerBtn.disabled = false;
     buzzerBtn.textContent = '';
-    
-    // Alle Zustands-Farben entfernen
-    buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-yellow-500', 'hover:bg-yellow-600');
-    
-    // Standard-Farbe (Rot) wiederherstellen
-    buzzerBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+    // NEU: 'glow-effect' wieder entfernt
+    buzzerBtn.classList.remove('bg-gray-500', 'bg-yellow-400', 'text-gray-900', 'glow-effect');
+    buzzerBtn.classList.add('bg-red-500');
     
     buzzerStatus.textContent = '';
     buzzerStatus.classList.add('hidden');
+    
+    answerInput.classList.add('hidden');
+    answerInput.value = ''; 
 });
-
-// --- Spieler & Punkte Updates ---
 
 socket.on('update-players', (updatedPlayers) => {
     playersContainer.innerHTML = '';
     updatedPlayers.forEach((player) => {
         const card = createPlayerCard(player.name, player.score, player.color);
         playersContainer.appendChild(card);
+        
+        // Eigenen Score im LocalStorage aktualisieren
         if (player.name === playerName) {
             localStorage.setItem('playerScore', player.score);
         }
