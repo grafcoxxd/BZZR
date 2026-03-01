@@ -139,6 +139,15 @@ io.on('connection', (socket) => {
     io.emit('scores-reset-globally');
     io.emit('update-players', Array.from(players.values()));
   });
+
+  // Bild-Übertragung
+  socket.on('moderator-show-image', (imageData) => {
+    io.emit('show-image-on-buzzer', imageData);
+  });
+
+  socket.on('moderator-hide-image', () => {
+    io.emit('hide-image-on-buzzer');
+  });
 });
 
 const PORT = process.env.PORT || 3000;

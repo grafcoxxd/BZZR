@@ -163,3 +163,19 @@ socket.on('connect', () => {
     }
     buzzerStatus.classList.add('hidden');
 });
+
+socket.on('show-image-on-buzzer', (imageData) => {
+    buzzerBtn.style.backgroundImage = `url('${imageData}')`;
+    buzzerBtn.style.backgroundSize = 'cover';
+    buzzerBtn.style.backgroundPosition = 'center';
+    // Wir nehmen den Text raus, damit man das Bild sieht
+    buzzerBtn.dataset.oldText = buzzerBtn.textContent;
+    buzzerBtn.textContent = ""; 
+});
+
+socket.on('hide-image-on-buzzer', () => {
+    buzzerBtn.style.backgroundImage = 'none';
+    if (buzzerBtn.dataset.oldText) {
+        buzzerBtn.textContent = buzzerBtn.dataset.oldText;
+    }
+});

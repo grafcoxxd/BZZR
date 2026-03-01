@@ -25,6 +25,12 @@
     </button>
 </div>
 
+<div class="flex gap-2 items-center bg-gray-800 p-2 rounded-lg">
+    <input type="file" id="imageUpload" accept="image/*" class="hidden">
+    <button onclick="document.getElementById('imageUpload').click()" class="bg-blue-500 p-2 rounded text-sm">Bild wählen</button>
+    <button id="hideImgBtn" class="bg-red-500 p-2 rounded text-sm hidden">Bild ausblenden</button>
+</div>
+
     <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
     <audio id="correctSound" src="/sounds/correct.mp3"></audio>
     <audio id="wrongSound" src="/sounds/wrong.mp3"></audio>
@@ -67,6 +73,9 @@
         const buzzerSound = document.getElementById('buzzerSound');
         const correctSound = document.getElementById('correctSound');
         const wrongSound = document.getElementById('wrongSound');
+        const imageUpload = document.getElementById('imageUpload');
+        const hideImgBtn = document.getElementById('hideImgBtn');
+
         buzzerSound.volume = 0.17;
         correctSound.volume = 0.1;
         wrongSound.volume = 0.1;
@@ -104,6 +113,24 @@
             }
         });
 
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    socket.emit('moderator-show-image', event.target.result);
+                    hideImgBtn.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        hideImgBtn.addEventListener('click', () => {
+            socket.emit('moderator-hide-image');
+            hideImgBtn.classList.add('hidden');
+            imageUpload.value = ""; // Reset
+        });
+        
         socket.on('buzzer-unlocked', () => {
             buzzerWinner.textContent = '';
             buzzerWinner.classList.add('hidden');
