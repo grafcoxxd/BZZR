@@ -12,6 +12,7 @@ const playerNameInput = document.getElementById('playerNameInput');
 const nameEntryDiv = document.getElementById('nameEntry');
 const buzzerSectionDiv = document.getElementById('buzzer-section');
 const playersContainer = document.getElementById('playersContainer');
+const mainBody = document.getElementById('mainBody');
 const shockwave = document.getElementById('shockwave');
 
 // Lautstärke
@@ -42,23 +43,17 @@ registerPlayerBtn.addEventListener('click', () => {
     }
 });
 
-// --- Spezialeffekte Logik ---
+// --- Effekt-Trigger ---
+function playBuzzerEffects() {
+    // Bildschirm-Shake
+    mainBody.classList.remove('apply-shake');
+    void mainBody.offsetWidth; // Reflow
+    mainBody.classList.add('apply-shake');
 
-function triggerWinEffects() {
-    // 1. Bildschirmschütteln (auf den Body anwenden für maximalen Effekt)
-    document.body.classList.remove('shake-effect');
-    void document.body.offsetWidth; // Force Reflow um Animation neuzustarten
-    document.body.classList.add('shake-effect');
-
-    // 2. Druckwelle (Shockwave)
-    shockwave.classList.remove('animate-shockwave');
-    void shockwave.offsetWidth; 
-    shockwave.classList.add('animate-shockwave');
-
-    // Nach 500ms Schüttel-Klasse entfernen, damit sie beim nächsten Mal wieder triggert
-    setTimeout(() => {
-        document.body.classList.remove('shake-effect');
-    }, 500);
+    // Druckwelle
+    shockwave.classList.remove('animate-shock');
+    void shockwave.offsetWidth; // Reflow
+    shockwave.classList.add('animate-shock');
 }
 
 // --- Tastatur-Steuerung (Leertaste) ---
@@ -87,16 +82,14 @@ socket.on('buzzer-locked', (buzzerName) => {
     buzzerBtn.disabled = true;
     buzzerBtn.textContent = buzzerName;
     
-    // Prüfen: Bin ICH der Gewinner?
     if (playerName === buzzerName) {
         buzzerBtn.classList.remove('bg-red-500');
         buzzerBtn.classList.add('bg-yellow-400', 'text-gray-900');
         buzzerStatus.textContent = 'DU HAST DEN BUZZER!';
         answerInput.classList.remove('hidden');
         answerInput.focus();
-        
-        // --- EFFEKTE TRIGERN ---
-        triggerWinEffects();
+        // Effekte abspielen wenn man selbst gewinnt
+        playBuzzerEffects();
     } else {
         buzzerBtn.classList.remove('bg-red-500');
         buzzerBtn.classList.add('bg-gray-500');
@@ -114,10 +107,9 @@ socket.on('buzzer-unlocked', () => {
     buzzerStatus.classList.add('hidden');
     answerInput.classList.add('hidden');
     answerInput.value = '';
-    
-    // Animationen sicherheitshalber stoppen
-    document.body.classList.remove('shake-effect');
-    shockwave.classList.remove('animate-shockwave');
+    // Animationen zurücksetzen
+    mainBody.classList.remove('apply-shake');
+    shockwave.classList.remove('animate-shock');
 });
 
 socket.on('update-players', (updatedPlayers) => {

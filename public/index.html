@@ -10,7 +10,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden; /* Verhindert Scrollbars beim Schütteln */
         }
         .player-card {
             background-color: #1a202c;
@@ -18,50 +17,47 @@
             border-radius: 1rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
-        /* Animation: Bildschirmschütteln */
-        @keyframes shake-anim {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+
+        /* Schüttel-Animation für den gesamten Bildschirm */
+        @keyframes screen-shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(5px, -5px); }
+            50% { transform: translate(-5px, 5px); }
+            75% { transform: translate(5px, 5px); }
+            100% { transform: translate(0, 0); }
         }
-        .shake-effect {
-            animation: shake-anim 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        .apply-shake {
+            animation: screen-shake 0.2s ease-in-out 2;
         }
 
-        /* Animation: Druckwelle (Shockwave) */
-        @keyframes ripple-out {
-            0% { width: 0; height: 0; opacity: 1; border-width: 10px; }
-            100% { width: 800px; height: 800px; opacity: 0; border-width: 1px; }
+        /* Druckwellen-Animation */
+        @keyframes shockwave-anim {
+            0% { transform: scale(0.5); opacity: 1; border-width: 20px; }
+            100% { transform: scale(4); opacity: 0; border-width: 1px; }
         }
         .shockwave {
-            position: absolute;
-            top: 50%;
+            position: fixed; /* Fixiert auf den Viewport, stört das Layout nicht */
+            top: 40%; /* Ungefähre Höhe des Buzzers */
             left: 50%;
-            transform: translate(-50%, -50%);
+            margin-left: -150px;
+            margin-top: -150px;
+            width: 300px;
+            height: 300px;
             border-radius: 50%;
-            border: 4px solid white;
-            pointer-events: none;
-            z-index: 50;
-            width: 0;
-            height: 0;
+            border: 8px solid white;
+            pointer-events: none; /* Klicks gehen durch das Element hindurch */
             opacity: 0;
+            z-index: 100;
         }
-        .animate-shockwave {
-            animation: ripple-out 0.6s ease-out;
+        .animate-shock {
+            animation: shockwave-anim 0.6s ease-out;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4">
+<body id="mainBody" class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4">
+
+    <div id="shockwave" class="shockwave"></div>
 
     <div id="nameEntry" class="w-full max-w-sm flex flex-col items-center gap-4 mt-10">
         <input type="text" id="playerNameInput" placeholder="Dein Name" class="flex-grow p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 text-center">
@@ -70,12 +66,9 @@
         </button>
     </div>
 
-    <div id="buzzer-section" class="flex flex-col items-center hidden relative w-full">
-        <div id="shockwave" class="shockwave"></div>
-
-        <button id="buzzerBtn" style="box-shadow: 2px 2px 8px 5px rgba(0,0,0,0.15);" class="bg-red-500 hover:bg-red-600 text-white font-bold mt-20 mb-10 p-20 rounded-full text-4xl sm:text-6xl transition-all duration-300 transform hover:scale-105 min-h-[400px] min-w-[400px] relative overflow-hidden">
+    <div id="buzzer-section" class="flex flex-col items-center hidden">
+        <button id="buzzerBtn" style="box-shadow: 2px 2px 8px 5px rgba(0,0,0,0.15);" class="bg-red-500 hover:bg-red-600 text-white font-bold mt-20 mb-10 p-20 rounded-full text-4xl sm:text-6xl transition-all duration-300 transform hover:scale-105 min-h-[400px] min-w-[400px]">
            </button>
-        
         <p id="buzzerStatus" class="text-xl text-yellow-300 font-semibold text-center"></p>
         <input type="text" id="answerInput" placeholder="Deine Antwort" class="w-full max-w-sm mt-4 p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 text-center hidden">
     </div>
