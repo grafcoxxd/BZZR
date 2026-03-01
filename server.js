@@ -5,7 +5,9 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  maxHttpBufferSize: 1e7 //Limit auf 10MB erhöht
+});
 
 const playerColors = [
   '#FCD34D', '#4ADE80', '#6EE7B7', '#A78BFA', '#F87171', 

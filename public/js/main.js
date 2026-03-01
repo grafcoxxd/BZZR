@@ -166,12 +166,15 @@ socket.on('connect', () => {
 
 socket.on('push-image', (imgData) => {
     if (imgData) {
-        // Bild als Hintergrund setzen
+        // Bild setzen
         buzzerBtn.style.backgroundImage = `url(${imgData})`;
         buzzerBtn.style.backgroundSize = 'cover';
         buzzerBtn.style.backgroundPosition = 'center';
+        // WICHTIG: Damit das Bild sichtbar ist, darf die Hintergrundfarbe 
+        // nicht voll deckend darüber liegen (Tailwind Klassen überschreiben)
+        buzzerBtn.classList.add('bg-blend-overlay');
     } else {
-        // Hintergrund entfernen
         buzzerBtn.style.backgroundImage = 'none';
+        buzzerBtn.classList.remove('bg-blend-overlay');
     }
 });
