@@ -25,17 +25,18 @@
     </button>
 </div>
 
-<div class="w-full max-w-2xl mt-4 px-4">
-    <div class="flex items-center gap-4 bg-gray-800 p-3 rounded-lg border border-gray-700">
-        <label class="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded-md transition text-sm">
-             Bilder auswählen
-            <input type="file" id="imageUpload" accept="image/*" multiple class="hidden">
-        </label>
-        <p class="text-gray-400 text-xs">Vorschau für Fragen-Bilder:</p>
+<div class="flex flex-col items-center gap-4 my-6">
+    <label id="uploadLabel" class="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white py-2 px-6 rounded-lg transition shadow-lg">
+        Bild für Frage hochladen
+        <input type="file" id="imageUpload" accept="image/*" class="hidden">
+    </label>
+
+    <div id="previewContainer" class="relative hidden">
+        <img id="imagePreview" src="" alt="Vorschau" class="max-h-40 rounded-lg border-2 border-teal-500 shadow-2xl">
+        <button id="deleteImageBtn" class="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-md border border-white">
+            ✕
+        </button>
     </div>
-    
-    <div id="imagePreviewContainer" class="flex flex-wrap gap-3 mt-4 justify-center">
-        </div>
 </div>
 
     <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
@@ -81,7 +82,10 @@
         const correctSound = document.getElementById('correctSound');
         const wrongSound = document.getElementById('wrongSound');
         const imageUpload = document.getElementById('imageUpload');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const deleteImageBtn = document.getElementById('deleteImageBtn');
+        const uploadLabel = document.getElementById('uploadLabel');
         buzzerSound.volume = 0.17;
         correctSound.volume = 0.1;
         wrongSound.volume = 0.1;
@@ -229,56 +233,46 @@
         });
 
 
-// Bilder beim Laden aus dem LocalStorage wiederherstellen
+// Beim Laden: Gespeichertes Bild aus LocalStorage holen
 window.addEventListener('DOMContentLoaded', () => {
-    const savedImages = JSON.parse(localStorage.getItem('modImages') || '[]');
-    savedImages.forEach(imgData => displayImage(imgData));
+    const savedImage = localStorage.getItem('currentQuestionImage');
+    if (savedImage) {
+        showPreview(savedImage);
+    }
 });
 
+// Bild hochladen & Bestehendes überschreiben
 imageUpload.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    
-    files.forEach(file => {
+    const file = e.target.files[0];
+    if (file) {
         const reader = new FileReader();
         reader.onload = (event) => {
             const imgData = event.target.result;
-            
-            // Im LocalStorage speichern
-            const savedImages = JSON.parse(localStorage.getItem('modImages') || '[]');
-            savedImages.push(imgData);
-            localStorage.setItem('modImages', JSON.stringify(savedImages));
-            
-            displayImage(imgData);
+            localStorage.setItem('currentQuestionImage', imgData);
+            showPreview(imgData);
         };
         reader.readAsDataURL(file);
-    });
+    }
 });
 
-function displayImage(imgData) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'relative group';
+// Bild löschen
+deleteImageBtn.addEventListener('click', () => {
+    localStorage.removeItem('currentQuestionImage');
+    hidePreview();
+});
 
-    const img = document.createElement('img');
-    img.src = imgData;
-    img.className = 'h-24 w-24 object-cover rounded-lg border-2 border-gray-700 hover:border-teal-400 cursor-pointer transition';
-    
-    // Klick auf das Bild zum Vergrößern (optional) oder Löschen
-    img.onclick = () => {
-        if(confirm("Bild aus der Vorschau löschen?")) {
-            removeImage(imgData, wrapper);
-        }
-    };
-
-    wrapper.appendChild(img);
-    imagePreviewContainer.appendChild(wrapper);
+function showPreview(src) {
+    imagePreview.src = src;
+    previewContainer.classList.remove('hidden');
+    //uploadLabel.classList.add('hidden'); // Verstecke den Upload-Button, wenn ein Bild da ist
 }
 
-function removeImage(imgData, element) {
-    let savedImages = JSON.parse(localStorage.getItem('modImages') || '[]');
-    savedImages = savedImages.filter(data => data !== imgData);
-    localStorage.setItem('modImages', JSON.stringify(savedImages));
-    element.remove();
-} 
+function hidePreview() {
+    imagePreview.src = "";
+    previewContainer.classList.add('hidden');
+    uploadLabel.classList.remove('hidden'); // Zeige Upload-Button wieder
+    imageUpload.value = ""; // Input zurücksetzen
+}
     </script>
 </body>
 </html>
