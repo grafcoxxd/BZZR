@@ -39,7 +39,13 @@
         }
         .glow-effect {
             /* Das !important sorgt dafür, dass der inline box-shadow überschrieben wird */
-            animation: pulse-glow 3s infinite ease-in-out; 
+            animation: pulse-glow 3s infinite ease-in-out !important; 
+        }
+
+        .grayscale-filter {
+        filter: grayscale(100%) brightness(0.7);
+        -webkit-filter: grayscale(100%) brightness(0.7);
+        opacity: 0.8;
         }
 
         @keyframes flash-green {
