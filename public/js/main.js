@@ -91,7 +91,7 @@ socket.on('buzzer-locked', (buzzerName) => {
 
     } else {
         // ANDERE sind dran -> Grau
-        buzzerBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+        buzzerBtn.classList.add('bg-gray-500', 'hover:bg-gray-600', 'filter:greyscale(100%)');
         buzzerBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
     }
     
