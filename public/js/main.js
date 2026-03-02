@@ -106,8 +106,8 @@ socket.on('buzzer-unlocked', () => {
     //document.body.classList.remove('bg-slate-900');
     //document.body.classList.add('bg-gray-900');
 
-    // NEU: 'glow-effect' wieder entfernt
-    buzzerBtn.classList.remove('bg-gray-500', 'bg-red-600', 'text-gray-900', 'glow-effect');
+    // NEU: 'glow-effect' und grayscale wieder entfernt
+    buzzerBtn.classList.remove('bg-gray-500', 'bg-red-600', 'text-gray-900', 'glow-effect', 'grayscale-filter');
     buzzerBtn.classList.add('bg-red-500');
 
     // Alle Zustands-Farben entfernen
