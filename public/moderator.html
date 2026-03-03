@@ -24,6 +24,9 @@
     <button id="resetBtn" class="bg-gray-500 hover:bg-gray-600 rounded-lg transition duration-300 max-w-[45px] h-[45px] flex-1 text-teal-200 text-4xl">
         ♻
     </button>
+    <button id="micBtn" class="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-full transition-all duration-300 w-12 h-12 flex items-center justify-center shadow-lg">
+        <span id="micIcon" style="font-size: 1.5rem;">🎤</span>
+    </button>
 </div>
 
 <div class="flex flex-col items-center w-full my-8">
@@ -306,6 +309,64 @@
         socket.on('connect', () => {
             socket.emit('register-moderator');
         });
+
+
+//-------------AUDIO RECORDING MOD--------------------
+let isStreaming = false;
+let mediaRecorder;
+const micBtn = document.getElementById('micBtn');
+const micIcon = document.getElementById('micIcon');
+
+micBtn.addEventListener('click', async () => {
+    if (!isStreaming) {
+        try {
+            // Öffnet den Browser-Dialog zum Teilen von Inhalten
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { width: 1, height: 1 }, // Minimales Video für den Stream-Container
+                audio: {
+                    echoCancellation: false, // Wichtig für Musikqualität
+                    noiseSuppression: false,
+                    autoGainControl: false
+                },
+                systemAudio: "include" // Erlaubt das Häkchen für System-Audio
+            });
+
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    socket.emit('audio-stream', event.data);
+                }
+            };
+
+            mediaRecorder.start(100); // Sendet alle 100ms ein Datenpaket
+            
+            isStreaming = true;
+            micBtn.classList.replace('bg-gray-600', 'bg-red-600');
+            micBtn.classList.add('animate-pulse');
+            micIcon.textContent = '🔊';
+
+            // Falls der Moderator im Browser auf "Freigabe stoppen" klickt
+            stream.getAudioTracks()[0].onended = () => stopStreaming();
+
+        } catch (err) {
+            console.error("Streaming abgebrochen:", err);
+        }
+    } else {
+        stopStreaming();
+    }
+});
+
+function stopStreaming() {
+    if (mediaRecorder) {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+    isStreaming = false;
+    micBtn.classList.replace('bg-red-600', 'bg-gray-700');
+    micBtn.classList.remove('animate-pulse');
+    micIcon.textContent = '🎤';
+}
     </script>
 </body>
 </html>

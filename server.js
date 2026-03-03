@@ -153,6 +153,10 @@ io.on('connection', (socket) => {
     io.emit('push-image', null);
   });
 
+  socket.on('audio-stream', (audioData) => {
+    socket.broadcast.emit('audio-receive', audioData);
+  });
+
 });
 
 const PORT = process.env.PORT || 3000;

@@ -213,3 +213,20 @@ socket.on('push-image', (imgData) => {
         buzzerBtn.style.backgroundImage = 'none';
     }
 });
+
+// Am Ende der main.js hinzufügen
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+socket.on('audio-receive', async (audioBlob) => {
+    try {
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        source.start();
+    } catch (e) {
+        // Tritt meist nur auf, wenn der User die Seite noch nicht berührt hat (Autoplay-Schutz)
+        console.warn("Audio-Paket konnte nicht abgespielt werden.");
+    }
+});
