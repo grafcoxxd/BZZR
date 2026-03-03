@@ -217,8 +217,30 @@ socket.on('push-image', (imgData) => {
 // Am Ende der main.js hinzufügen
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
+// 2. Funktion, um den AudioContext zu aktivieren
+async function unlockAudio() {
+    if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+        console.log("AudioContext wurde aktiviert!");
+    }
+}
+
+// 3. Diese Funktion an alle Interaktionen binden
+// Wenn der Spieler beitritt:
+registerPlayerBtn.addEventListener('click', unlockAudio);
+// Wenn der Spieler buzzert:
+buzzerBtn.addEventListener('click', unlockAudio);
+// Wenn der Spieler die Leertaste drückt:
+window.addEventListener('keydown', unlockAudio);
+
+// 4. Der Empfang der Daten
 socket.on('audio-receive', async (audioBlob) => {
     try {
+        // Falls der Kontext noch schläft (trotz Klick), versuchen wir es hier nochmal kurz
+        if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+        }
+
         const arrayBuffer = await audioBlob.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         const source = audioContext.createBufferSource();
@@ -226,7 +248,7 @@ socket.on('audio-receive', async (audioBlob) => {
         source.connect(audioContext.destination);
         source.start();
     } catch (e) {
-        // Tritt meist nur auf, wenn der User die Seite noch nicht berührt hat (Autoplay-Schutz)
-        console.warn("Audio-Paket konnte nicht abgespielt werden.");
+        // Diese Meldung kam bei dir in der Konsole
+        console.warn("Audio-Paket konnte nicht abgespielt werden. Bitte einmal auf die Seite klicken!", e);
     }
 });
