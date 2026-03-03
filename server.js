@@ -153,11 +153,6 @@ io.on('connection', (socket) => {
     io.emit('push-image', null);
   });
 
-  socket.on('audio-stream', (audioData) => {
-    // Schickt das Audio-Paket an alle außer den Sender (Moderator)
-    socket.broadcast.emit('audio-receive', audioData);
-  });
-
 });
 
 const PORT = process.env.PORT || 3000;

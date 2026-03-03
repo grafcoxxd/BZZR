@@ -213,19 +213,3 @@ socket.on('push-image', (imgData) => {
         buzzerBtn.style.backgroundImage = 'none';
     }
 });
-
-// Audio Recording
-let audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-socket.on('audio-receive', async (audioBlob) => {
-    try {
-        const arrayBuffer = await audioBlob.arrayBuffer();
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.start();
-    } catch (e) {
-        console.error("Audio-Fehler:", e);
-    }
-});
