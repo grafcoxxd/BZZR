@@ -12,6 +12,7 @@ const playerNameInput = document.getElementById('playerNameInput');
 const nameEntryDiv = document.getElementById('nameEntry');
 const buzzerSectionDiv = document.getElementById('buzzer-section');
 const playersContainer = document.getElementById('playersContainer');
+const audio = new Audio();
 
 // Lautstärke
 //buzzerSound.volume = 0.17;
@@ -34,8 +35,8 @@ const updateGameVolume = () => {
 // 2. Live-Streaming Sound
 const updateLiveVolume = () => {
     const vol = liveVolumeSlider.value;
-    if (liveAudioElement) {
-        liveAudioElement.volume = vol;
+    if (audio) {
+        audio.volume = vol;
     }
     localStorage.setItem('liveVolume', vol);
 };
@@ -259,7 +260,7 @@ socket.on('push-image', (imgData) => {
 let mediaSource = new MediaSource();
 let sourceBuffer;
 let audioQueue = [];
-const audio = new Audio();
+
 audio.src = URL.createObjectURL(mediaSource);
 
 // 1. MediaSource vorbereiten
