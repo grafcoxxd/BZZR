@@ -320,18 +320,30 @@ const micIcon = document.getElementById('micIcon');
 micBtn.addEventListener('click', async () => {
     if (!isStreaming) {
         try {
-            // Öffnet den Browser-Dialog zum Teilen von Inhalten
             const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { width: 1, height: 1 }, // Minimales Video für den Stream-Container
+                video: true, // Muss true sein, damit der Dialog erscheint
                 audio: {
-                    echoCancellation: false, // Wichtig für Musikqualität
+                    echoCancellation: false,
                     noiseSuppression: false,
                     autoGainControl: false
                 },
-                systemAudio: "include" // Erlaubt das Häkchen für System-Audio
+                systemAudio: "include"
             });
 
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
+            // WICHTIG: Nur die Audiospur extrahieren!
+            const audioStream = new MediaStream(stream.getAudioTracks());
+
+            // Falls keine Audiospur da ist (User hat Haken nicht gesetzt)
+            if (stream.getAudioTracks().length === 0) {
+                alert("Du musst den Haken bei 'System-Audio teilen' setzen!");
+                stream.getTracks().forEach(track => track.stop());
+                return;
+            }
+
+            // Jetzt den MediaRecorder nur mit dem AudioStream füttern
+            mediaRecorder = new MediaRecorder(audioStream, { 
+                mimeType: 'audio/webm; codecs=opus' 
+            });
             
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
@@ -339,15 +351,17 @@ micBtn.addEventListener('click', async () => {
                 }
             };
 
-            mediaRecorder.start(100); // Sendet alle 100ms ein Datenpaket
+            mediaRecorder.start(100);
             
             isStreaming = true;
             micBtn.classList.replace('bg-gray-600', 'bg-red-600');
             micBtn.classList.add('animate-pulse');
             micIcon.textContent = '🔊';
 
-            // Falls der Moderator im Browser auf "Freigabe stoppen" klickt
-            stream.getAudioTracks()[0].onended = () => stopStreaming();
+            // Stop-Event, wenn der User den Browser-Button "Freigabe stoppen" nutzt
+            stream.getTracks().forEach(track => {
+                track.onended = () => stopStreaming();
+            });
 
         } catch (err) {
             console.error("Streaming abgebrochen:", err);
