@@ -14,9 +14,50 @@ const buzzerSectionDiv = document.getElementById('buzzer-section');
 const playersContainer = document.getElementById('playersContainer');
 
 // Lautstärke
-buzzerSound.volume = 0.17;
-correctSound.volume = 0.1;
-wrongSound.volume = 0.1;
+//buzzerSound.volume = 0.17;
+//correctSound.volume = 0.1;
+//wrongSound.volume = 0.1;
+
+// DOM Elemente für die Slider
+const gameVolumeSlider = document.getElementById('gameVolume');
+const liveVolumeSlider = document.getElementById('liveVolume');
+
+// 1. Spiel-Sounds (Buzzer, Richtig, Falsch)
+const updateGameVolume = () => {
+    const vol = gameVolumeSlider.value;
+    buzzerSound.volume = vol;
+    correctSound.volume = vol * 0.6; // Richtig/Falsch etwas leiser als der Buzzer
+    wrongSound.volume = vol * 0.6;
+    localStorage.setItem('gameVolume', vol);
+};
+
+// 2. Live-Streaming Sound
+const updateLiveVolume = () => {
+    const vol = liveVolumeSlider.value;
+    if (liveAudioElement) {
+        liveAudioElement.volume = vol;
+    }
+    localStorage.setItem('liveVolume', vol);
+};
+
+// Event Listener für die Slider
+gameVolumeSlider.addEventListener('input', updateGameVolume);
+liveVolumeSlider.addEventListener('input', updateLiveVolume);
+
+// --- Beim Laden der Seite: Gespeicherte Lautstärke wiederherstellen ---
+window.addEventListener('DOMContentLoaded', () => {
+    const savedGameVol = localStorage.getItem('gameVolume');
+    const savedLiveVol = localStorage.getItem('liveVolume');
+
+    if (savedGameVol !== null) {
+        gameVolumeSlider.value = savedGameVol;
+        updateGameVolume();
+    }
+    if (savedLiveVol !== null) {
+        liveVolumeSlider.value = savedLiveVol;
+        updateLiveVolume();
+    }
+});
 
 let playerName = null;
 
