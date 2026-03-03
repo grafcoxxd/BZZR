@@ -214,53 +214,56 @@ socket.on('push-image', (imgData) => {
     }
 });
 
-// Am Ende der main.js hinzufügen
-// 1. AudioContext initialisieren (noch im Schlafmodus)
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+// --- AUDIO STREAMING LOGIK ---
+let mediaSource = new MediaSource();
+let sourceBuffer;
+let audioQueue = [];
+const audio = new Audio();
+audio.src = URL.createObjectURL(mediaSource);
 
-// 2. Funktion zum Aufwecken des Tons bei Interaktion
-async function unlockAudio() {
-    if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-        console.log("Audiokanal für Musik-Quiz entsperrt!");
+// 1. MediaSource vorbereiten
+mediaSource.addEventListener('sourceopen', () => {
+    // Wir sagen dem Browser, dass WebM/Opus Daten kommen
+    sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs=opus');
+    
+    // Wenn ein Paket fertig verarbeitet wurde, das nächste aus der Schlange nehmen
+    sourceBuffer.addEventListener('updateend', () => {
+        if (audioQueue.length > 0 && !sourceBuffer.updating) {
+            sourceBuffer.appendBuffer(audioQueue.shift());
+        }
+    });
+});
+
+// 2. Aktivierung bei Interaktion (Autoplay-Schutz)
+async function startAudioOnInteraction() {
+    if (audio.paused) {
+        audio.play().catch(e => console.log("Warte auf Interaktion..."));
+        console.log("Audio-Wiedergabe bereit!");
     }
 }
 
-// An Interaktionen binden
-registerPlayerBtn.addEventListener('click', unlockAudio);
-buzzerBtn.addEventListener('click', unlockAudio);
-window.addEventListener('keydown', unlockAudio);
+registerPlayerBtn.addEventListener('click', startAudioOnInteraction);
+buzzerBtn.addEventListener('click', startAudioOnInteraction);
+window.addEventListener('keydown', startAudioOnInteraction);
 
-// 3. Empfang und Wiedergabe der Audio-Datenpakete
+// 3. Empfang der Daten vom Server
 socket.on('audio-receive', async (data) => {
-    try {
-        // Sicherstellen, dass der Context läuft
-        if (audioContext.state === 'suspended') {
-            await audioContext.resume();
+    // Daten in ArrayBuffer umwandeln
+    let arrayBuffer;
+    if (data instanceof ArrayBuffer) {
+        arrayBuffer = data;
+    } else {
+        arrayBuffer = new Uint8Array(data).buffer;
+    }
+
+    // In den Buffer schieben oder in die Warteschlange, falls der Buffer noch arbeitet
+    if (sourceBuffer && !sourceBuffer.updating) {
+        try {
+            sourceBuffer.appendBuffer(arrayBuffer);
+        } catch (e) {
+            console.error("Fehler beim Hinzufügen zum Buffer:", e);
         }
-
-        let arrayBuffer;
-
-        // FEHLERBEHEBUNG: Prüfen, ob die Daten ein Blob oder schon ein Buffer sind
-        if (data instanceof Blob) {
-            arrayBuffer = await data.arrayBuffer();
-        } else if (data instanceof ArrayBuffer) {
-            arrayBuffer = data;
-        } else {
-            // Falls es als Uint8Array/Buffer kommt (häufig bei Socket.io)
-            arrayBuffer = new Uint8Array(data).buffer;
-        }
-
-        // Dekodieren und Abspielen
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.start();
-
-    } catch (e) {
-        // Wenn der Fehler "decodeAudioData" ist, liegt es oft an unvollständigen Paketen 
-        // während der Moderator gerade erst startet. Das kann ignoriert werden.
-        console.warn("Audio-Frame konnte nicht dekodiert werden (normal bei Start/Stop).");
+    } else {
+        audioQueue.push(arrayBuffer);
     }
 });
