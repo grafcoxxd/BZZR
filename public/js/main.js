@@ -215,40 +215,52 @@ socket.on('push-image', (imgData) => {
 });
 
 // Am Ende der main.js hinzufügen
+// 1. AudioContext initialisieren (noch im Schlafmodus)
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-// 2. Funktion, um den AudioContext zu aktivieren
+// 2. Funktion zum Aufwecken des Tons bei Interaktion
 async function unlockAudio() {
     if (audioContext.state === 'suspended') {
         await audioContext.resume();
-        console.log("AudioContext wurde aktiviert!");
+        console.log("Audiokanal für Musik-Quiz entsperrt!");
     }
 }
 
-// 3. Diese Funktion an alle Interaktionen binden
-// Wenn der Spieler beitritt:
+// An Interaktionen binden
 registerPlayerBtn.addEventListener('click', unlockAudio);
-// Wenn der Spieler buzzert:
 buzzerBtn.addEventListener('click', unlockAudio);
-// Wenn der Spieler die Leertaste drückt:
 window.addEventListener('keydown', unlockAudio);
 
-// 4. Der Empfang der Daten
-socket.on('audio-receive', async (audioBlob) => {
+// 3. Empfang und Wiedergabe der Audio-Datenpakete
+socket.on('audio-receive', async (data) => {
     try {
-        // Falls der Kontext noch schläft (trotz Klick), versuchen wir es hier nochmal kurz
+        // Sicherstellen, dass der Context läuft
         if (audioContext.state === 'suspended') {
             await audioContext.resume();
         }
 
-        const arrayBuffer = await audioBlob.arrayBuffer();
+        let arrayBuffer;
+
+        // FEHLERBEHEBUNG: Prüfen, ob die Daten ein Blob oder schon ein Buffer sind
+        if (data instanceof Blob) {
+            arrayBuffer = await data.arrayBuffer();
+        } else if (data instanceof ArrayBuffer) {
+            arrayBuffer = data;
+        } else {
+            // Falls es als Uint8Array/Buffer kommt (häufig bei Socket.io)
+            arrayBuffer = new Uint8Array(data).buffer;
+        }
+
+        // Dekodieren und Abspielen
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         const source = audioContext.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(audioContext.destination);
         source.start();
+
     } catch (e) {
-        // Diese Meldung kam bei dir in der Konsole
-        console.warn("Audio-Paket konnte nicht abgespielt werden. Bitte einmal auf die Seite klicken!", e);
+        // Wenn der Fehler "decodeAudioData" ist, liegt es oft an unvollständigen Paketen 
+        // während der Moderator gerade erst startet. Das kann ignoriert werden.
+        console.warn("Audio-Frame konnte nicht dekodiert werden (normal bei Start/Stop).");
     }
 });
