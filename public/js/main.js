@@ -124,6 +124,12 @@ socket.on('buzzer-locked', (buzzerName) => {
         // NEU: Hintergrund der Seite auf Gelb ändern
         //document.body.classList.remove('bg-gray-900');
         //document.body.classList.add('bg-slate-900');
+        document.body.classList.add('animate-flash-white');
+    
+        // Klasse nach der Animation wieder entfernen
+        setTimeout(() => {
+            document.body.classList.remove('animate-flash-white');
+        }, 800);
 
         // ICH bin dran -> Gelb (auch im Hover)
         buzzerBtn.classList.add('bg-red-600', 'hover:bg-red-600');
