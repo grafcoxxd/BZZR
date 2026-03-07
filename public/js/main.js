@@ -129,7 +129,7 @@ socket.on('buzzer-locked', (buzzerName) => {
         // Klasse nach der Animation wieder entfernen
         setTimeout(() => {
             document.body.classList.remove('animate-flash-white');
-        }, 800);
+        }, 600);
 
         // ICH bin dran -> Gelb (auch im Hover)
         buzzerBtn.classList.add('bg-red-600', 'hover:bg-red-600');
