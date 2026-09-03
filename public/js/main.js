@@ -12,43 +12,37 @@ const playerNameInput = document.getElementById('playerNameInput');
 const nameEntryDiv = document.getElementById('nameEntry');
 const buzzerSectionDiv = document.getElementById('buzzer-section');
 const playersContainer = document.getElementById('playersContainer');
-const audio = new Audio();
-
-// Lautstärke
-//buzzerSound.volume = 0.17;
-//correctSound.volume = 0.1;
-//wrongSound.volume = 0.1;
-
-// DOM Elemente für die Slider
 const gameVolumeSlider = document.getElementById('gameVolume');
 const liveVolumeSlider = document.getElementById('liveVolume');
 
-// 1. Spiel-Sounds (Buzzer, Richtig, Falsch)
+const audio = new Audio();
+let playerName = null;
+
+// --- Lautstärke-Steuerung ---
 const updateGameVolume = () => {
-    const vol = gameVolumeSlider.value;
+    const vol = parseFloat(gameVolumeSlider.value);
     buzzerSound.volume = vol;
-    correctSound.volume = vol * 0.6; // Richtig/Falsch etwas leiser als der Buzzer
+    correctSound.volume = vol * 0.6;
     wrongSound.volume = vol * 0.6;
     localStorage.setItem('gameVolume', vol);
 };
 
-// 2. Live-Streaming Sound
 const updateLiveVolume = () => {
-    const vol = liveVolumeSlider.value;
+    const vol = parseFloat(liveVolumeSlider.value);
     if (audio) {
         audio.volume = vol;
     }
     localStorage.setItem('liveVolume', vol);
 };
 
-// Event Listener für die Slider
 gameVolumeSlider.addEventListener('input', updateGameVolume);
 liveVolumeSlider.addEventListener('input', updateLiveVolume);
 
-// --- Beim Laden der Seite: Gespeicherte Lautstärke wiederherstellen ---
+// --- Initialization & LocalStorage ---
 window.addEventListener('DOMContentLoaded', () => {
     const savedGameVol = localStorage.getItem('gameVolume');
     const savedLiveVol = localStorage.getItem('liveVolume');
+    const savedName = localStorage.getItem('playerName');
 
     if (savedGameVol !== null) {
         gameVolumeSlider.value = savedGameVol;
@@ -58,14 +52,6 @@ window.addEventListener('DOMContentLoaded', () => {
         liveVolumeSlider.value = savedLiveVol;
         updateLiveVolume();
     }
-});
-
-let playerName = null;
-
-// --- Login & LocalStorage Logik ---
-
-window.addEventListener('DOMContentLoaded', () => {
-    const savedName = localStorage.getItem('playerName');
     if (savedName) {
         playerNameInput.value = savedName;
     }
@@ -73,20 +59,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // --- Tastatur-Steuerung (Leertaste) ---
 window.addEventListener('keydown', (event) => {
-    // Prüfen, ob die Leertaste gedrückt wurde
     if (event.key === ' ' || event.code === 'Space') {
-        
-        // WICHTIG: Verhindern, dass der Buzzer auslöst, wenn man gerade im Textfeld schreibt
         if (document.activeElement === answerInput || document.activeElement === playerNameInput) {
             return;
         }
 
-        // Standard-Verhalten der Leertaste (Scrollen) verhindern
         event.preventDefault();
 
-        // Nur auslösen, wenn der Button nicht deaktiviert ist (also noch niemand gebuzzert hat)
         if (!buzzerBtn.disabled && playerName) {
-            socket.emit('buzzer-pressed', playerName);
+            socket.emit('buzzer-pressed');
         }
     }
 });
@@ -104,10 +85,9 @@ registerPlayerBtn.addEventListener('click', () => {
 });
 
 // --- Buzzer Logik ---
-
 buzzerBtn.addEventListener('click', () => {
     if (playerName) {
-      socket.emit('buzzer-pressed', playerName);
+        socket.emit('buzzer-pressed');
     }
 });
 
@@ -115,30 +95,15 @@ socket.on('buzzer-locked', (buzzerName) => {
     buzzerSound.play();
     buzzerBtn.disabled = true;
     buzzerBtn.textContent = `${buzzerName}`;
-    
-    // Basis-Farbe (Rot) entfernen
-   // buzzerBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
 
     if (playerName === buzzerName) {
-
-        // NEU: Hintergrund der Seite auf Gelb ändern
-        //document.body.classList.remove('bg-gray-900');
-        //document.body.classList.add('bg-slate-900');
         document.body.classList.add('animate-flash-white');
-    
-        // Klasse nach der Animation wieder entfernen
         setTimeout(() => {
             document.body.classList.remove('animate-flash-white');
         }, 600);
 
-        // ICH bin dran -> Gelb (auch im Hover)
-        buzzerBtn.classList.add('bg-red-600', 'hover:bg-red-600');
-       // buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
-        // NEU: 'glow-effect' hinzugefügt
-        buzzerBtn.classList.add('glow-effect');
-
+        buzzerBtn.classList.add('bg-red-600', 'hover:bg-red-600', 'glow-effect');
     } else {
-        // ANDERE sind dran -> Grau
         buzzerBtn.classList.add('bg-gray-500', 'hover:bg-gray-600', 'grayscale-filter');
         buzzerBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
     }
@@ -150,19 +115,7 @@ socket.on('buzzer-unlocked', () => {
     buzzerBtn.disabled = false;
     buzzerBtn.textContent = '';
     
-    // NEU: Hintergrund wieder auf die ursprüngliche Farbe (Dunkelgrau) zurücksetzen
-    //document.body.classList.remove('bg-slate-900');
-    //document.body.classList.add('bg-gray-900');
-
-    // NEU: 'glow-effect' und grayscale wieder entfernt
-    buzzerBtn.classList.remove('bg-gray-500', 'bg-red-600', 'text-gray-900', 'glow-effect', 'grayscale-filter');
-    buzzerBtn.classList.add('bg-red-500');
-
-    // Alle Zustands-Farben entfernen
-    buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-teal-500', 'hover:bg-red-600');
-    
-
-    // Standard-Farbe (Rot) wiederherstellen
+    buzzerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-red-600', 'hover:bg-red-600', 'bg-yellow-500', 'hover:bg-yellow-600', 'bg-teal-500', 'glow-effect', 'grayscale-filter');
     buzzerBtn.classList.add('bg-red-500', 'hover:bg-red-500');
     
     buzzerStatus.textContent = '';
@@ -170,7 +123,6 @@ socket.on('buzzer-unlocked', () => {
 });
 
 // --- Spieler & Punkte Updates ---
-
 socket.on('update-players', (updatedPlayers) => {
     playersContainer.innerHTML = '';
     updatedPlayers.forEach((player) => {
@@ -185,14 +137,17 @@ socket.on('update-players', (updatedPlayers) => {
 function createPlayerCard(name, score, color) {
     const card = document.createElement('div');
     card.className = 'player-card p-6 flex flex-col items-center text-center';
+    
     const nameEl = document.createElement('h2');
     nameEl.className = 'text-2xl font-bold mb-2';
     nameEl.textContent = name;
     nameEl.style.color = color;
+    
     const scoreEl = document.createElement('p');
     scoreEl.className = 'text-5xl font-extrabold my-4';
     scoreEl.textContent = score;
     scoreEl.style.color = color;
+
     card.appendChild(scoreEl);
     card.appendChild(nameEl);
     return card;
@@ -212,30 +167,21 @@ if (answerInput) {
 
 socket.on('play-correct-sound', () => {
     correctSound.play();
-
-    // Klasse für grünes Blitzen hinzufügen
     document.body.classList.add('animate-flash-green');
-    
-    // Klasse nach der Animation wieder entfernen, damit sie beim nächsten Mal erneut triggert
     setTimeout(() => {
         document.body.classList.remove('animate-flash-green');
     }, 800);
 });
 
 socket.on('play-wrong-sound', () => {
-    wrongSound.play()
-
-    // Klasse für rotes Blitzen hinzufügen
+    wrongSound.play();
     document.body.classList.add('animate-flash-red');
-    
-    // Klasse nach der Animation wieder entfernen
     setTimeout(() => {
         document.body.classList.remove('animate-flash-red');
     }, 800);
 });
 
 // --- Verbindung ---
-
 socket.on('disconnect', () => {
     buzzerStatus.textContent = 'Verbindung getrennt. Reconnect...';
     buzzerStatus.classList.remove('hidden');
@@ -252,12 +198,10 @@ socket.on('connect', () => {
 
 socket.on('push-image', (imgData) => {
     if (imgData) {
-        // Bild als Hintergrund setzen
         buzzerBtn.style.backgroundImage = `url(${imgData})`;
         buzzerBtn.style.backgroundSize = 'cover';
         buzzerBtn.style.backgroundPosition = 'center';
     } else {
-        // Hintergrund entfernen
         buzzerBtn.style.backgroundImage = 'none';
     }
 });
@@ -269,12 +213,9 @@ let audioQueue = [];
 
 audio.src = URL.createObjectURL(mediaSource);
 
-// 1. MediaSource vorbereiten
 mediaSource.addEventListener('sourceopen', () => {
-    // Wir sagen dem Browser, dass WebM/Opus Daten kommen
     sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs=opus');
     
-    // Wenn ein Paket fertig verarbeitet wurde, das nächste aus der Schlange nehmen
     sourceBuffer.addEventListener('updateend', () => {
         if (audioQueue.length > 0 && !sourceBuffer.updating) {
             sourceBuffer.appendBuffer(audioQueue.shift());
@@ -282,7 +223,6 @@ mediaSource.addEventListener('sourceopen', () => {
     });
 });
 
-// 2. Aktivierung bei Interaktion (Autoplay-Schutz)
 async function startAudioOnInteraction() {
     if (audio.paused) {
         audio.play().catch(e => console.log("Warte auf Interaktion..."));
@@ -294,9 +234,7 @@ registerPlayerBtn.addEventListener('click', startAudioOnInteraction);
 buzzerBtn.addEventListener('click', startAudioOnInteraction);
 window.addEventListener('keydown', startAudioOnInteraction);
 
-// 3. Empfang der Daten vom Server
 socket.on('audio-receive', async (data) => {
-    // Daten in ArrayBuffer umwandeln
     let arrayBuffer;
     if (data instanceof ArrayBuffer) {
         arrayBuffer = data;

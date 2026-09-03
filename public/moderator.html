@@ -188,31 +188,27 @@
         });
 
         window.addEventListener('paste', (event) => {
-                const items = (event.clipboardData || event.originalEvent.clipboardData).items;
-    
-                for (let index in items) {
-                    const item = items[index];
-                    if (item.kind === 'file') {
-                        const blob = item.getAsFile();
-                        const reader = new FileReader();
-            
-                        reader.onload = (e) => {
-                            const imgData = e.target.result;
-                
-                            // 1. Vorschau im Mod-Office anzeigen
-                            showPreview(imgData);
-                
-                            // 2. Bild an alle Spieler senden
-                            socket.emit('image-updated', imgData);
-                
-                            // 3. Im LocalStorage speichern, falls Seite neu geladen wird
-                            localStorage.setItem('currentQuestionImage', imgData);
-                        };
-            
-                        reader.readAsDataURL(blob);
-                    }
+            const items = (event.clipboardData || (event.originalEvent && event.originalEvent.clipboardData))?.items;
+            if (!items) return;
+
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.kind === 'file') {
+                    const blob = item.getAsFile();
+                    if (!blob) continue;
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        const imgData = e.target.result;
+                        showPreview(imgData);
+                        socket.emit('image-updated', imgData);
+                        localStorage.setItem('currentQuestionImage', imgData);
+                    };
+
+                    reader.readAsDataURL(blob);
                 }
-            });
+            }
+        });
 
         // --- Buzzer & Moderator Logik ---
         socket.on('buzzer-winner', (name) => {

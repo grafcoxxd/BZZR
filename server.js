@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  maxHttpBufferSize: 1e7 //Limit auf 10MB erhöht
+  maxHttpBufferSize: 1e7 // Limit auf 10MB erhöht
 });
 
 const playerColors = [
@@ -19,7 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let buzzerLocked = false;
 let buzzerWinnerName = null;
-let players = new Map();
+const players = new Map();
 
 io.on('connection', (socket) => {
   console.log('Ein Benutzer ist verbunden');
@@ -34,42 +34,41 @@ io.on('connection', (socket) => {
   });
 
   socket.on('register-player', (data) => {
-    // Falls data ein String ist (alter Code), konvertieren wir es
     const name = typeof data === 'object' ? data.name : data;
     const initialScore = typeof data === 'object' ? data.score : 0;
 
     if (availableColors.length > 0) {
-        const randomIndex = Math.floor(Math.random() * availableColors.length);
-        const assignedColor = availableColors.splice(randomIndex, 1)[0];
+      const randomIndex = Math.floor(Math.random() * availableColors.length);
+      const assignedColor = availableColors.splice(randomIndex, 1)[0];
 
-        players.set(socket.id, { 
-            name: name, 
-            score: initialScore, 
-            text: '', 
-            color: assignedColor 
-        }); 
-        
-        io.emit('update-players', Array.from(players.values()));
+      players.set(socket.id, { 
+        name: name, 
+        score: initialScore, 
+        text: '', 
+        color: assignedColor 
+      }); 
+      
+      io.emit('update-players', Array.from(players.values()));
     }
   });
 
   socket.on('buzzer-pressed', () => {
     if (!buzzerLocked) {
-        const player = players.get(socket.id);
-        if (player) {
-            buzzerLocked = true;
-            buzzerWinnerName = player.name;
-            io.emit('buzzer-locked', buzzerWinnerName);
-            io.to('moderator-room').emit('buzzer-winner', buzzerWinnerName);
-        }
+      const player = players.get(socket.id);
+      if (player) {
+        buzzerLocked = true;
+        buzzerWinnerName = player.name;
+        io.emit('buzzer-locked', buzzerWinnerName);
+        io.to('moderator-room').emit('buzzer-winner', buzzerWinnerName);
+      }
     }
   });
 
   socket.on('moderator-correct', (points) => {
     const winner = Array.from(players.values()).find(p => p.name === buzzerWinnerName);
     if (winner) {
-        winner.score += points;
-        io.emit('update-players', Array.from(players.values()));
+      winner.score += points;
+      io.emit('update-players', Array.from(players.values()));
     }
     io.emit('play-correct-sound');
     buzzerLocked = false;
@@ -79,12 +78,12 @@ io.on('connection', (socket) => {
 
   socket.on('moderator-release-buzzer', () => {
     if (buzzerWinnerName) {
-        players.forEach((player) => {
-            if (player.name !== buzzerWinnerName) {
-                player.score += 1;
-            }
-        });
-        io.emit('update-players', Array.from(players.values()));
+      players.forEach((player) => {
+        if (player.name !== buzzerWinnerName) {
+          player.score += 1;
+        }
+      });
+      io.emit('update-players', Array.from(players.values()));
     }
     io.emit('play-wrong-sound');
     buzzerLocked = false;
@@ -101,62 +100,56 @@ io.on('connection', (socket) => {
   socket.on('add-point-to-player', (playerName) => {
     const player = Array.from(players.values()).find(p => p.name === playerName);
     if (player) {
-        player.score += 1;
-        io.emit('update-players', Array.from(players.values()));
+      player.score += 1;
+      io.emit('update-players', Array.from(players.values()));
     }
   });
 
   socket.on('subtract-point-from-player', (playerName) => {
     const player = Array.from(players.values()).find(p => p.name === playerName);
     if (player && player.score > 0) {
-        player.score -= 1;
-        io.emit('update-players', Array.from(players.values()));
+      player.score -= 1;
+      io.emit('update-players', Array.from(players.values()));
     }
   });
 
   socket.on('player-typing', (text) => {
-      const player = players.get(socket.id);
-      if (player) {
-          player.text = text;
-          io.emit('update-text', { name: player.name, text: player.text });
-      }
+    const player = players.get(socket.id);
+    if (player) {
+      player.text = text;
+      io.emit('update-text', { name: player.name, text: player.text });
+    }
   });
 
   socket.on('disconnect', () => {
     const disconnectedPlayer = players.get(socket.id);
     if (disconnectedPlayer) {
-        availableColors.push(disconnectedPlayer.color);
-        players.delete(socket.id);
-        io.emit('update-players', Array.from(players.values()));
+      availableColors.push(disconnectedPlayer.color);
+      players.delete(socket.id);
+      io.emit('update-players', Array.from(players.values()));
     }
   });
 
-  // Alle Punkte für alle Spieler zurücksetzen
   socket.on('moderator-reset-all-scores', () => {
     console.log('Moderator setzt alle Punkte zurück.');
     players.forEach((player) => {
       player.score = 0;
     });
-  // Wichtig: Signal an alle senden, damit auch der LocalStorage geleert wird
     io.emit('scores-reset-globally');
     io.emit('update-players', Array.from(players.values()));
   });
   
-  // Bild-Synchronisation
   socket.on('image-updated', (imgData) => {
-    // Sende das Bild an alle verbundenen Clients (Spieler)
     io.emit('push-image', imgData);
   });
 
   socket.on('image-removed', () => {
-    // Signal zum Löschen des Bildes an alle
     io.emit('push-image', null);
   });
 
   socket.on('audio-stream', (audioData) => {
     socket.broadcast.emit('audio-receive', audioData);
   });
-
 });
 
 const PORT = process.env.PORT || 3000;
