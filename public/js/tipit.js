@@ -93,9 +93,9 @@ function renderHintListSkeleton() {
                 <span class="text-xs font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2.5 py-1 rounded-full flex items-center gap-1">
                     🪙 ${sampleCosts[i - 1]}
                 </span>
-                <button class="bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold py-1 px-3 rounded transition duration-200 shadow opacity-50 cursor-not-allowed">
-                    Kaufen
-                </button>
+                <span class="text-xs font-semibold text-gray-400 bg-gray-800/80 border border-gray-600/40 px-2.5 py-1 rounded-md flex items-center gap-1">
+                    🔒 Verdeckt
+                </span>
             </div>
         `;
 
