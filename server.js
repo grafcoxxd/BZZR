@@ -21,8 +21,17 @@ let buzzerLocked = false;
 let buzzerWinnerName = null;
 const players = new Map();
 
+let tipitState = {
+  playerRevealedHints: {},
+  globalRevealedHints: [],
+  bonusHintRevealed: false
+};
+
 io.on('connection', (socket) => {
   console.log('Ein Benutzer ist verbunden');
+
+  // Sende aktuellen TipIt Status an neu verbundene Clients
+  socket.emit('tipit-state-update', tipitState);
 
   if (buzzerLocked) {
     socket.emit('buzzer-locked', buzzerWinnerName);
@@ -31,6 +40,7 @@ io.on('connection', (socket) => {
   socket.on('register-moderator', () => {
     socket.join('moderator-room');
     io.emit('update-players', Array.from(players.values()));
+    socket.emit('tipit-state-update', tipitState);
   });
 
   socket.on('register-player', (data) => {
@@ -49,6 +59,7 @@ io.on('connection', (socket) => {
       }); 
       
       io.emit('update-players', Array.from(players.values()));
+      socket.emit('tipit-state-update', tipitState);
     }
   });
 
@@ -149,6 +160,34 @@ io.on('connection', (socket) => {
 
   socket.on('audio-stream', (audioData) => {
     socket.broadcast.emit('audio-receive', audioData);
+  });
+
+  // --- TipIt Socket Handlers ---
+  socket.on('tipit-assign-hint', ({ playerName, hintIndex }) => {
+    if (!tipitState.playerRevealedHints[playerName]) {
+      tipitState.playerRevealedHints[playerName] = [];
+    }
+    if (!tipitState.playerRevealedHints[playerName].includes(hintIndex)) {
+      tipitState.playerRevealedHints[playerName].push(hintIndex);
+    }
+    if (!tipitState.globalRevealedHints.includes(hintIndex)) {
+      tipitState.globalRevealedHints.push(hintIndex);
+    }
+    io.emit('tipit-state-update', tipitState);
+  });
+
+  socket.on('tipit-toggle-bonus', (revealed) => {
+    tipitState.bonusHintRevealed = typeof revealed === 'boolean' ? revealed : !tipitState.bonusHintRevealed;
+    io.emit('tipit-state-update', tipitState);
+  });
+
+  socket.on('tipit-reset', () => {
+    tipitState = {
+      playerRevealedHints: {},
+      globalRevealedHints: [],
+      bonusHintRevealed: false
+    };
+    io.emit('tipit-state-update', tipitState);
   });
 });
 

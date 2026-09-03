@@ -105,7 +105,12 @@ function setupModeratorUI() {
 }
 
 function toggleBonusHint() {
-    bonusHintRevealed = !bonusHintRevealed;
+    if (isModerator) {
+        socket.emit('tipit-toggle-bonus', !bonusHintRevealed);
+    }
+}
+
+function updateBonusHintUI() {
     const bonusHintText = document.getElementById('bonus-hint-text');
     const bonusCard = document.getElementById('bonus-hint-card');
 
@@ -128,6 +133,20 @@ function toggleBonusHint() {
         }
     }
 }
+
+// Socket Listener für TipIt Status-Updates
+socket.on('tipit-state-update', (state) => {
+    if (!state) return;
+    playerRevealedHints = state.playerRevealedHints || {};
+    globalRevealedHints = new Set(state.globalRevealedHints || []);
+    bonusHintRevealed = !!state.bonusHintRevealed;
+
+    updateBonusHintUI();
+    renderHintList();
+    if (latestPlayers && latestPlayers.length > 0) {
+        updatePlayersUI(latestPlayers);
+    }
+});
 
 // Rendert die 10 Hinweiszeilen in der zentralen Liste
 function renderHintList() {
@@ -203,18 +222,8 @@ function renderHintList() {
 }
 
 function assignHintToPlayer(targetPlayerName, hintIndex) {
-    if (!playerRevealedHints[targetPlayerName]) {
-        playerRevealedHints[targetPlayerName] = [];
-    }
-
-    if (!playerRevealedHints[targetPlayerName].includes(hintIndex)) {
-        playerRevealedHints[targetPlayerName].push(hintIndex);
-        globalRevealedHints.add(hintIndex);
-
-        renderHintList();
-        if (latestPlayers) {
-            updatePlayersUI(latestPlayers);
-        }
+    if (isModerator) {
+        socket.emit('tipit-assign-hint', { playerName: targetPlayerName, hintIndex: hintIndex });
     }
 }
 
