@@ -187,18 +187,6 @@ function renderHintList() {
                     ✓ Aufgedeckt
                 </span>
             `;
-        } else if (isModerator) {
-            rightStatusHTML = `
-                <span class="text-[10px] font-semibold text-teal-300 bg-teal-500/20 border border-teal-500/40 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    🖐️ Auf Spieler ziehen
-                </span>
-            `;
-        } else {
-            rightStatusHTML = `
-                <span class="text-[10px] font-semibold text-gray-400 bg-gray-800/80 border border-gray-600/40 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    🔒 Verdeckt
-                </span>
-            `;
         }
 
         hintRow.className = rowClasses;
@@ -207,11 +195,11 @@ function renderHintList() {
                 <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold flex items-center justify-center">
                     ${i}
                 </span>
-                <span class="text-xs font-medium text-gray-300 italic">Hinweis ${i} (Verdeckt)</span>
+                <span class="text-xs font-medium text-gray-300 italic">Hinweis ${i}</span>
             </div>
             <div class="flex items-center gap-1.5">
                 <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    🪙 ${sampleCosts[i - 1]}
+                    💰 ${sampleCosts[i - 1]}
                 </span>
                 ${rightStatusHTML}
             </div>
@@ -286,7 +274,7 @@ function createPlayerCard(player) {
 
     const coinsEl = document.createElement('div');
     coinsEl.className = 'text-xl font-extrabold my-0.5 text-amber-400 flex items-center justify-center gap-1 select-none';
-    coinsEl.innerHTML = `🪙 <span class="text-white">${player.score || 0}</span>`;
+    coinsEl.innerHTML = `💰 <span class="text-white">${player.score || 0}</span>`;
 
     if (isModerator) {
         coinsEl.classList.add('cursor-pointer', 'hover:scale-110', 'transition-transform');
