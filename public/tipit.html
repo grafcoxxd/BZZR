@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TipIt - BZZR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .player-card {
+            background-color: #1a202c;
+            color: #e2e8f0;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .slot-container {
+            min-height: 120px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-between p-4">
+
+    <!-- Lautstärke Steuerung -->
+    <div class="fixed top-4 left-4 z-50 flex flex-col gap-3 bg-gray-900/80 p-3 rounded-xl border border-gray-700 backdrop-blur-sm">
+        <div class="flex items-center gap-3">
+            <span class="text-xl">🎮</span>
+            <input id="gameVolume" type="range" min="0" max="1" step="0.01" value="0.2" 
+                   class="w-24 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-teal-400">
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <span class="text-xl">🎵</span>
+            <input id="liveVolume" type="range" min="0" max="1" step="0.01" value="0.5" 
+                   class="w-24 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-red-500">
+        </div>
+    </div>
+    
+    <audio id="buzzerSound" src="/sounds/buzzer.mp3"></audio>
+    <audio id="correctSound" src="/sounds/correct.mp3"></audio>
+    <audio id="wrongSound" src="/sounds/wrong.mp3"></audio>
+
+    <!-- Namenseingabe zum Beitreten -->
+    <div id="nameEntry" class="w-full max-w-sm flex flex-col items-center gap-4 my-auto">
+        <h1 class="text-4xl font-extrabold text-teal-400 tracking-wider mb-2">TipIt</h1>
+        <p class="text-gray-400 text-sm text-center mb-2">Kaufe Hinweise mit Münzen und finde den gesuchten Begriff!</p>
+        <input type="text" id="playerNameInput" placeholder="Dein Name" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 text-center">
+        <button id="registerPlayerBtn" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+            Beitreten
+        </button>
+    </div>
+
+    <!-- Haupt-Spielfeld (wird nach Beitritt sichtbar) -->
+    <div id="game-container" class="w-full max-w-7xl hidden flex-grow flex flex-col justify-between my-auto py-4">
+        
+        <!-- Header / Game Title -->
+        <div class="text-center mb-4">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-teal-400 tracking-wider">TipIt</h1>
+        </div>
+
+        <!-- 3-Spalten Layout: Links (3 Spieler), Mitte (Hinweisliste), Rechts (3 Spieler) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch my-auto">
+            
+            <!-- Linke Spalte: Spieler 1, 5, 3 (Top, Mid, Bot) -->
+            <div class="lg:col-span-3 flex flex-col justify-between gap-4">
+                <!-- Slot 0: Top-Left (Spieler 1) -->
+                <div id="slot-0" class="slot-container"></div>
+                <!-- Slot 4: Mid-Left (Spieler 5) -->
+                <div id="slot-4" class="slot-container"></div>
+                <!-- Slot 2: Bot-Left (Spieler 3) -->
+                <div id="slot-2" class="slot-container"></div>
+            </div>
+
+            <!-- Mittlere Spalte: Hinweisliste -->
+            <div class="lg:col-span-6 flex flex-col gap-3 bg-gray-800/60 p-5 rounded-2xl border border-gray-700/80 shadow-2xl backdrop-blur-md">
+                
+                <!-- Bonushinweis (Große Zeile ganz oben) -->
+                <div id="bonus-hint-card" class="bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border-2 border-yellow-500/60 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl sm:text-3xl">⭐</span>
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-widest text-yellow-400 block">Bonushinweis für Alle</span>
+                            <span id="bonus-hint-text" class="text-base sm:text-lg font-semibold text-gray-300 italic">Verdeckt</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 text-xs font-bold px-3 py-1 rounded-full">
+                            Kostenlos
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 10 Hinweise (Kleinere Zeilen) -->
+                <div id="hints-list" class="flex flex-col gap-2 mt-1">
+                    <!-- Wird dynamisch per JS befüllt -->
+                </div>
+
+            </div>
+
+            <!-- Rechte Spalte: Spieler 2, 6, 4 (Top, Mid, Bot) -->
+            <div class="lg:col-span-3 flex flex-col justify-between gap-4">
+                <!-- Slot 1: Top-Right (Spieler 2) -->
+                <div id="slot-1" class="slot-container"></div>
+                <!-- Slot 5: Mid-Right (Spieler 6) -->
+                <div id="slot-5" class="slot-container"></div>
+                <!-- Slot 3: Bot-Right (Spieler 4) -->
+                <div id="slot-3" class="slot-container"></div>
+            </div>
+
+        </div>
+
+        <div id="status-bar" class="text-center mt-4">
+            <p id="tipitStatus" class="text-lg text-yellow-300 font-semibold"></p>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/tipit.js"></script>
+</body>
+</html>
