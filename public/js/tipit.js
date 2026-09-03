@@ -381,7 +381,7 @@ function updatePlayersUI(updatedPlayers) {
 
 function createPlayerCard(player) {
     const card = document.createElement('div');
-    card.className = 'player-card w-full p-3 flex flex-col items-center text-center border border-gray-700/60 relative overflow-hidden transition-all duration-200';
+    card.className = 'player-card w-full max-w-[260px] p-3 flex flex-col items-center text-center border border-gray-700/60 relative overflow-hidden transition-all duration-200 shadow-lg';
     
     // Farblicher oberer Akzent
     const topBar = document.createElement('div');
@@ -432,6 +432,7 @@ function createPlayerCard(player) {
     card.appendChild(coinsEl);
 
     // Aufgedeckte Hinweise für diesen Spieler unter der Karte
+    const isOwnerOrMod = isModerator || (playerName && player.name === playerName);
     const hints = playerRevealedHints[player.name] || [];
     if (hints.length > 0) {
         const hintsContainer = document.createElement('div');
@@ -442,13 +443,15 @@ function createPlayerCard(player) {
             const title = hintObj ? hintObj.title : `Hinweis ${hintNum}`;
             const text = hintObj ? hintObj.text : '';
 
+            const showText = isOwnerOrMod && text;
+
             const hintBadge = document.createElement('div');
             hintBadge.className = 'bg-teal-950/80 border border-teal-500/50 text-teal-200 text-xs p-2 rounded-lg flex flex-col gap-0.5 shadow-sm';
             hintBadge.innerHTML = `
                 <div class="font-bold text-teal-300 text-[11px] flex items-center gap-1">
                     <span>💡</span> <span class="truncate">${escapeHtml(title)}</span>
                 </div>
-                ${text ? `<div class="text-[11px] text-gray-200 font-medium leading-snug pl-4">${escapeHtml(text)}</div>` : ''}
+                ${showText ? `<div class="text-[11px] text-gray-200 font-medium leading-snug pl-4">${escapeHtml(text)}</div>` : ''}
             `;
             hintsContainer.appendChild(hintBadge);
         });
