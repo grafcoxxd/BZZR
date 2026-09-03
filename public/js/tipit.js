@@ -1,5 +1,9 @@
 const socket = io();
 
+// URL Modus (Spieler oder Moderator)
+const urlParams = new URLSearchParams(window.location.search);
+const isModerator = urlParams.get('mod') === 'true' || urlParams.get('role') === 'moderator';
+
 // DOM Elemente
 const nameEntryDiv = document.getElementById('nameEntry');
 const gameContainerDiv = document.getElementById('game-container');
@@ -7,6 +11,7 @@ const playerNameInput = document.getElementById('playerNameInput');
 const registerPlayerBtn = document.getElementById('registerPlayerBtn');
 const hintsListContainer = document.getElementById('hints-list');
 const tipitStatus = document.getElementById('tipitStatus');
+const modBadge = document.getElementById('modBadge');
 
 const gameVolumeSlider = document.getElementById('gameVolume');
 const liveVolumeSlider = document.getElementById('liveVolume');
@@ -50,7 +55,7 @@ const updateLiveVolume = () => {
 gameVolumeSlider.addEventListener('input', updateGameVolume);
 liveVolumeSlider.addEventListener('input', updateLiveVolume);
 
-// LocalStorage Wiederherstellung
+// LocalStorage Wiederherstellung & Moderator Check
 window.addEventListener('DOMContentLoaded', () => {
     const savedGameVol = localStorage.getItem('gameVolume');
     const savedLiveVol = localStorage.getItem('liveVolume');
@@ -68,8 +73,31 @@ window.addEventListener('DOMContentLoaded', () => {
         playerNameInput.value = savedName;
     }
 
+    if (isModerator) {
+        socket.emit('register-moderator');
+        if (modBadge) modBadge.classList.remove('hidden');
+        nameEntryDiv.classList.add('hidden');
+        gameContainerDiv.classList.remove('hidden');
+        setupModeratorUI();
+    }
+
     renderHintListSkeleton();
 });
+
+// Zusätzliche UI-Anpassungen für Moderator
+function setupModeratorUI() {
+    const bonusCard = document.getElementById('bonus-hint-card');
+    if (bonusCard) {
+        const bonusControlArea = bonusCard.querySelector('.flex.items-center.gap-2');
+        if (bonusControlArea) {
+            bonusControlArea.innerHTML = `
+                <button class="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold text-xs py-1.5 px-3 rounded-lg transition shadow">
+                    👁️ Für alle aufdecken
+                </button>
+            `;
+        }
+    }
+}
 
 // Rendert die 10 Platzhalter-Hinweiszeilen
 function renderHintListSkeleton() {
@@ -82,6 +110,16 @@ function renderHintListSkeleton() {
         const hintRow = document.createElement('div');
         hintRow.className = 'bg-gray-700/60 hover:bg-gray-700/80 border border-gray-600/60 p-3 rounded-lg flex items-center justify-between transition duration-200';
         
+        const modActionHTML = isModerator ? `
+            <button class="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold py-1 px-3 rounded transition duration-200 shadow">
+                👁️ Aufdecken
+            </button>
+        ` : `
+            <span class="text-xs font-semibold text-gray-400 bg-gray-800/80 border border-gray-600/40 px-2.5 py-1 rounded-md flex items-center gap-1">
+                🔒 Verdeckt
+            </span>
+        `;
+
         hintRow.innerHTML = `
             <div class="flex items-center gap-3">
                 <span class="w-6 h-6 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/40 text-xs font-bold flex items-center justify-center">
@@ -93,9 +131,7 @@ function renderHintListSkeleton() {
                 <span class="text-xs font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2.5 py-1 rounded-full flex items-center gap-1">
                     🪙 ${sampleCosts[i - 1]}
                 </span>
-                <span class="text-xs font-semibold text-gray-400 bg-gray-800/80 border border-gray-600/40 px-2.5 py-1 rounded-md flex items-center gap-1">
-                    🔒 Verdeckt
-                </span>
+                ${modActionHTML}
             </div>
         `;
 
@@ -156,8 +192,19 @@ function createPlayerCard(player) {
     nameEl.style.color = player.color || '#ffffff';
 
     const coinsEl = document.createElement('div');
-    coinsEl.className = 'text-2xl font-extrabold my-1 text-amber-400 flex items-center justify-center gap-1';
+    coinsEl.className = 'text-2xl font-extrabold my-1 text-amber-400 flex items-center justify-center gap-1 select-none';
     coinsEl.innerHTML = `🪙 <span class="text-white">${player.score || 0}</span>`;
+
+    if (isModerator) {
+        coinsEl.classList.add('cursor-pointer', 'hover:scale-110', 'transition-transform');
+        coinsEl.title = 'Linksklick: +1 Münze | Rechtsklick: -1 Münze';
+        
+        coinsEl.onclick = () => socket.emit('add-point-to-player', player.name);
+        coinsEl.oncontextmenu = (e) => {
+            e.preventDefault();
+            socket.emit('subtract-point-from-player', player.name);
+        };
+    }
 
     card.appendChild(nameEl);
     card.appendChild(coinsEl);
@@ -172,7 +219,9 @@ socket.on('disconnect', () => {
 });
 
 socket.on('connect', () => {
-    if (playerName) {
+    if (isModerator) {
+        socket.emit('register-moderator');
+    } else if (playerName) {
         const savedScore = parseInt(localStorage.getItem('playerScore')) || 0;
         socket.emit('register-player', { name: playerName, score: savedScore });
     }
