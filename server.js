@@ -21,10 +21,19 @@ let buzzerLocked = false;
 let buzzerWinnerName = null;
 const players = new Map();
 
+const defaultHints = Array.from({ length: 10 }, (_, i) => ({
+  id: i + 1,
+  title: `Hinweis ${i + 1}`,
+  text: `Tipp ${i + 1}`,
+  cost: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5][i]
+}));
+
 let tipitState = {
   playerRevealedHints: {},
   globalRevealedHints: [],
-  bonusHintRevealed: false
+  bonusHintRevealed: false,
+  bonusHintText: "Das ist ein Bonushinweis für alle!",
+  hints: JSON.parse(JSON.stringify(defaultHints))
 };
 
 io.on('connection', (socket) => {
@@ -164,12 +173,24 @@ io.on('connection', (socket) => {
 
   // --- TipIt Socket Handlers ---
   socket.on('tipit-assign-hint', ({ playerName, hintIndex }) => {
+    const hintObj = tipitState.hints.find(h => h.id === hintIndex);
+    const cost = hintObj ? (parseInt(hintObj.cost) || 0) : 0;
+
     if (!tipitState.playerRevealedHints[playerName]) {
       tipitState.playerRevealedHints[playerName] = [];
     }
+
     if (!tipitState.playerRevealedHints[playerName].includes(hintIndex)) {
       tipitState.playerRevealedHints[playerName].push(hintIndex);
+
+      // Münzen vom Spieler abziehen
+      const player = Array.from(players.values()).find(p => p.name === playerName);
+      if (player) {
+        player.score = Math.max(0, player.score - cost);
+        io.emit('update-players', Array.from(players.values()));
+      }
     }
+
     if (!tipitState.globalRevealedHints.includes(hintIndex)) {
       tipitState.globalRevealedHints.push(hintIndex);
     }
@@ -181,11 +202,30 @@ io.on('connection', (socket) => {
     io.emit('tipit-state-update', tipitState);
   });
 
+  socket.on('tipit-update-config', (configData) => {
+    if (configData) {
+      if (typeof configData.bonusHintText === 'string') {
+        tipitState.bonusHintText = configData.bonusHintText;
+      }
+      if (Array.isArray(configData.hints)) {
+        tipitState.hints = configData.hints.map((h, i) => ({
+          id: i + 1,
+          title: h.title || `Hinweis ${i + 1}`,
+          text: h.text || '',
+          cost: parseInt(h.cost) >= 0 ? parseInt(h.cost) : 1
+        }));
+      }
+    }
+    io.emit('tipit-state-update', tipitState);
+  });
+
   socket.on('tipit-reset', () => {
     tipitState = {
       playerRevealedHints: {},
       globalRevealedHints: [],
-      bonusHintRevealed: false
+      bonusHintRevealed: false,
+      bonusHintText: "Das ist ein Bonushinweis für alle!",
+      hints: JSON.parse(JSON.stringify(defaultHints))
     };
     io.emit('tipit-state-update', tipitState);
   });

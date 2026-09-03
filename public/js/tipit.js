@@ -12,6 +12,14 @@ const registerPlayerBtn = document.getElementById('registerPlayerBtn');
 const hintsListContainer = document.getElementById('hints-list');
 const tipitStatus = document.getElementById('tipitStatus');
 const modBadge = document.getElementById('modBadge');
+const openConfigBtn = document.getElementById('openConfigBtn');
+const modConfigModal = document.getElementById('modConfigModal');
+const closeConfigBtn = document.getElementById('closeConfigBtn');
+const cancelConfigBtn = document.getElementById('cancelConfigBtn');
+const saveConfigBtn = document.getElementById('saveConfigBtn');
+const resetTipitBtn = document.getElementById('resetTipitBtn');
+const cfgBonusHint = document.getElementById('cfgBonusHint');
+const cfgHintsContainer = document.getElementById('cfgHintsContainer');
 
 const gameVolumeSlider = document.getElementById('gameVolume');
 const liveVolumeSlider = document.getElementById('liveVolume');
@@ -25,6 +33,13 @@ let latestPlayers = [];
 let playerRevealedHints = {}; // { [playerName]: [hintIndex, ...] }
 let globalRevealedHints = new Set(); // Set of hintIndices revealed
 let bonusHintRevealed = false;
+let bonusHintText = "Das ist ein Bonushinweis für alle!";
+let currentHints = Array.from({ length: 10 }, (_, i) => ({
+    id: i + 1,
+    title: `Hinweis ${i + 1}`,
+    text: `Tipp ${i + 1}`,
+    cost: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5][i]
+}));
 
 // Slots für bis zu 6 Spieler in spezifischer Reihenfolge:
 // 1: Top-Left (slot-0)
@@ -88,7 +103,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderHintList();
 });
 
-// Zusätzliche UI-Anpassungen für Moderator (z. B. Bonushinweis-Button)
+// Zusätzliche UI-Anpassungen für Moderator (z. B. Bonushinweis-Button & Config Modal Button)
 function setupModeratorUI() {
     const bonusCard = document.getElementById('bonus-hint-card');
     if (bonusCard) {
@@ -102,6 +117,103 @@ function setupModeratorUI() {
             document.getElementById('revealBonusBtn').addEventListener('click', toggleBonusHint);
         }
     }
+
+    if (openConfigBtn) {
+        openConfigBtn.classList.remove('hidden');
+        openConfigBtn.addEventListener('click', openConfigModal);
+    }
+    if (closeConfigBtn) closeConfigBtn.addEventListener('click', closeConfigModal);
+    if (cancelConfigBtn) cancelConfigBtn.addEventListener('click', closeConfigModal);
+    if (saveConfigBtn) saveConfigBtn.addEventListener('click', saveConfigModal);
+    if (resetTipitBtn) {
+        resetTipitBtn.addEventListener('click', () => {
+            if (confirm("Möchtest du wirklich den gesamten TipIt-Fortschritt zurücksetzen?")) {
+                socket.emit('tipit-reset');
+                closeConfigModal();
+            }
+        });
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function openConfigModal() {
+    if (!modConfigModal) return;
+
+    if (cfgBonusHint) {
+        cfgBonusHint.value = bonusHintText;
+    }
+
+    if (cfgHintsContainer) {
+        cfgHintsContainer.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+            const hintObj = currentHints.find(h => h.id === i) || {
+                id: i,
+                title: `Hinweis ${i}`,
+                text: `Tipp ${i}`,
+                cost: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5][i - 1]
+            };
+
+            const row = document.createElement('div');
+            row.className = 'bg-gray-900/40 border border-gray-700/80 p-3 rounded-xl flex flex-col sm:flex-row gap-3 items-center';
+            row.innerHTML = `
+                <div class="flex items-center gap-2 sm:w-1/4">
+                    <span class="w-6 h-6 rounded-full bg-teal-500/20 text-teal-400 text-xs font-bold flex items-center justify-center shrink-0">#${i}</span>
+                    <input type="text" id="cfgTitle_${i}" value="${escapeHtml(hintObj.title)}" placeholder="Titel in Liste" class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-teal-400">
+                </div>
+                <div class="flex-grow w-full sm:w-2/4">
+                    <input type="text" id="cfgText_${i}" value="${escapeHtml(hintObj.text)}" placeholder="Inhalt des Tipps..." class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white text-xs focus:outline-none focus:ring-1 focus:ring-teal-400">
+                </div>
+                <div class="flex items-center gap-1.5 w-full sm:w-1/4 justify-end">
+                    <span class="text-xs text-amber-400 font-bold">Kosten:</span>
+                    <input type="number" id="cfgCost_${i}" value="${hintObj.cost}" min="0" max="99" class="w-16 p-2 rounded bg-gray-700 border border-gray-600 text-white text-xs font-bold text-center focus:outline-none focus:ring-1 focus:ring-teal-400">
+                    <span class="text-xs text-gray-400">💰</span>
+                </div>
+            `;
+            cfgHintsContainer.appendChild(row);
+        }
+    }
+
+    modConfigModal.classList.remove('hidden');
+}
+
+function closeConfigModal() {
+    if (modConfigModal) {
+        modConfigModal.classList.add('hidden');
+    }
+}
+
+function saveConfigModal() {
+    const bonusHintVal = cfgBonusHint ? cfgBonusHint.value.trim() : bonusHintText;
+    const hintsArr = [];
+
+    for (let i = 1; i <= 10; i++) {
+        const titleEl = document.getElementById(`cfgTitle_${i}`);
+        const textEl = document.getElementById(`cfgText_${i}`);
+        const costEl = document.getElementById(`cfgCost_${i}`);
+
+        hintsArr.push({
+            id: i,
+            title: titleEl ? titleEl.value.trim() || `Hinweis ${i}` : `Hinweis ${i}`,
+            text: textEl ? textEl.value.trim() : '',
+            cost: costEl ? Math.max(0, parseInt(costEl.value) || 0) : 1
+        });
+    }
+
+    socket.emit('tipit-update-config', {
+        bonusHintText: bonusHintVal,
+        hints: hintsArr
+    });
+
+    closeConfigModal();
 }
 
 function toggleBonusHint() {
@@ -111,18 +223,18 @@ function toggleBonusHint() {
 }
 
 function updateBonusHintUI() {
-    const bonusHintText = document.getElementById('bonus-hint-text');
+    const bonusHintTextEl = document.getElementById('bonus-hint-text');
     const bonusCard = document.getElementById('bonus-hint-card');
 
-    if (bonusHintText) {
+    if (bonusHintTextEl) {
         if (bonusHintRevealed) {
-            bonusHintText.textContent = "Bonushinweis: Das ist ein toller Beispiel-Hinweis für alle!";
-            bonusHintText.classList.remove('italic', 'text-gray-300');
-            bonusHintText.classList.add('text-yellow-200', 'font-bold');
+            bonusHintTextEl.textContent = `Bonushinweis: ${bonusHintText}`;
+            bonusHintTextEl.classList.remove('italic', 'text-gray-300');
+            bonusHintTextEl.classList.add('text-yellow-200', 'font-bold');
         } else {
-            bonusHintText.textContent = "Verdeckt";
-            bonusHintText.classList.add('italic', 'text-gray-300');
-            bonusHintText.classList.remove('text-yellow-200', 'font-bold');
+            bonusHintTextEl.textContent = "Verdeckt";
+            bonusHintTextEl.classList.add('italic', 'text-gray-300');
+            bonusHintTextEl.classList.remove('text-yellow-200', 'font-bold');
         }
     }
 
@@ -140,6 +252,12 @@ socket.on('tipit-state-update', (state) => {
     playerRevealedHints = state.playerRevealedHints || {};
     globalRevealedHints = new Set(state.globalRevealedHints || []);
     bonusHintRevealed = !!state.bonusHintRevealed;
+    if (state.bonusHintText !== undefined) {
+        bonusHintText = state.bonusHintText;
+    }
+    if (Array.isArray(state.hints)) {
+        currentHints = state.hints;
+    }
 
     updateBonusHintUI();
     renderHintList();
@@ -151,12 +269,16 @@ socket.on('tipit-state-update', (state) => {
 // Rendert die 10 Hinweiszeilen in der zentralen Liste
 function renderHintList() {
     hintsListContainer.innerHTML = '';
-    
-    // Beispielhafte Münzkosten für die 10 Hinweise
-    const sampleCosts = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5];
 
     for (let i = 1; i <= 10; i++) {
         const isRevealedAny = globalRevealedHints.has(i);
+        const hintObj = currentHints.find(h => h.id === i) || {
+            id: i,
+            title: `Hinweis ${i}`,
+            text: `Tipp ${i}`,
+            cost: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5][i - 1]
+        };
+
         const hintRow = document.createElement('div');
         
         let rowClasses = 'border p-2 rounded-lg flex items-center justify-between transition duration-200 select-none ';
@@ -191,15 +313,15 @@ function renderHintList() {
 
         hintRow.className = rowClasses;
         hintRow.innerHTML = `
-            <div class="flex items-center gap-2">
-                <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold flex items-center justify-center">
+            <div class="flex items-center gap-2 overflow-hidden mr-2">
+                <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold flex items-center justify-center shrink-0">
                     ${i}
                 </span>
-                <span class="text-xs font-medium text-gray-300 italic">Hinweis ${i}</span>
+                <span class="text-xs font-semibold text-gray-200 truncate">${escapeHtml(hintObj.title)}</span>
             </div>
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 shrink-0">
                 <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    💰 ${sampleCosts[i - 1]}
+                    💰 ${hintObj.cost}
                 </span>
                 ${rightStatusHTML}
             </div>
@@ -313,14 +435,20 @@ function createPlayerCard(player) {
     const hints = playerRevealedHints[player.name] || [];
     if (hints.length > 0) {
         const hintsContainer = document.createElement('div');
-        hintsContainer.className = 'w-full mt-2 pt-2 border-t border-gray-700/60 flex flex-col gap-1 text-left';
+        hintsContainer.className = 'w-full mt-2 pt-2 border-t border-gray-700/60 flex flex-col gap-1.5 text-left';
         
         hints.forEach(hintNum => {
+            const hintObj = currentHints.find(h => h.id === hintNum);
+            const title = hintObj ? hintObj.title : `Hinweis ${hintNum}`;
+            const text = hintObj ? hintObj.text : '';
+
             const hintBadge = document.createElement('div');
-            hintBadge.className = 'bg-teal-950/70 border border-teal-500/40 text-teal-200 text-[11px] px-2 py-1 rounded flex items-center justify-between gap-1 shadow-sm';
+            hintBadge.className = 'bg-teal-950/80 border border-teal-500/50 text-teal-200 text-xs p-2 rounded-lg flex flex-col gap-0.5 shadow-sm';
             hintBadge.innerHTML = `
-                <span class="font-semibold truncate">💡 Hinweis ${hintNum}</span>
-                <span class="text-[10px] text-teal-400/80 italic font-normal">Aufgedeckt</span>
+                <div class="font-bold text-teal-300 text-[11px] flex items-center gap-1">
+                    <span>💡</span> <span class="truncate">${escapeHtml(title)}</span>
+                </div>
+                ${text ? `<div class="text-[11px] text-gray-200 font-medium leading-snug pl-4">${escapeHtml(text)}</div>` : ''}
             `;
             hintsContainer.appendChild(hintBadge);
         });
