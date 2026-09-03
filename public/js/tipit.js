@@ -21,6 +21,10 @@ const correctSound = document.getElementById('correctSound');
 const wrongSound = document.getElementById('wrongSound');
 
 let playerName = null;
+let latestPlayers = [];
+let playerRevealedHints = {}; // { [playerName]: [hintIndex, ...] }
+let globalRevealedHints = new Set(); // Set of hintIndices revealed
+let bonusHintRevealed = false;
 
 // Slots für bis zu 6 Spieler in spezifischer Reihenfolge:
 // 1: Top-Left (slot-0)
@@ -81,61 +85,136 @@ window.addEventListener('DOMContentLoaded', () => {
         setupModeratorUI();
     }
 
-    renderHintListSkeleton();
+    renderHintList();
 });
 
-// Zusätzliche UI-Anpassungen für Moderator
+// Zusätzliche UI-Anpassungen für Moderator (z. B. Bonushinweis-Button)
 function setupModeratorUI() {
     const bonusCard = document.getElementById('bonus-hint-card');
     if (bonusCard) {
         const bonusControlArea = bonusCard.querySelector('.flex.items-center.gap-2');
         if (bonusControlArea) {
             bonusControlArea.innerHTML = `
-                <button class="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold text-xs py-1.5 px-3 rounded-lg transition shadow">
+                <button id="revealBonusBtn" class="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold text-xs py-1 px-2.5 rounded-lg transition shadow flex items-center gap-1">
                     👁️ Für alle aufdecken
                 </button>
             `;
+            document.getElementById('revealBonusBtn').addEventListener('click', toggleBonusHint);
         }
     }
 }
 
-// Rendert die 10 Platzhalter-Hinweiszeilen
-function renderHintListSkeleton() {
+function toggleBonusHint() {
+    bonusHintRevealed = !bonusHintRevealed;
+    const bonusHintText = document.getElementById('bonus-hint-text');
+    const bonusCard = document.getElementById('bonus-hint-card');
+
+    if (bonusHintText) {
+        if (bonusHintRevealed) {
+            bonusHintText.textContent = "Bonushinweis: Das ist ein toller Beispiel-Hinweis für alle!";
+            bonusHintText.classList.remove('italic', 'text-gray-300');
+            bonusHintText.classList.add('text-yellow-200', 'font-bold');
+        } else {
+            bonusHintText.textContent = "Verdeckt";
+            bonusHintText.classList.add('italic', 'text-gray-300');
+            bonusHintText.classList.remove('text-yellow-200', 'font-bold');
+        }
+    }
+
+    if (isModerator && bonusCard) {
+        const btn = bonusCard.querySelector('#revealBonusBtn');
+        if (btn) {
+            btn.textContent = bonusHintRevealed ? '🙈 Verbergen' : '👁️ Für alle aufdecken';
+        }
+    }
+}
+
+// Rendert die 10 Hinweiszeilen in der zentralen Liste
+function renderHintList() {
     hintsListContainer.innerHTML = '';
     
     // Beispielhafte Münzkosten für die 10 Hinweise
     const sampleCosts = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5];
 
     for (let i = 1; i <= 10; i++) {
+        const isRevealedAny = globalRevealedHints.has(i);
         const hintRow = document.createElement('div');
-        hintRow.className = 'bg-gray-700/60 hover:bg-gray-700/80 border border-gray-600/60 p-3 rounded-lg flex items-center justify-between transition duration-200';
         
-        const modActionHTML = isModerator ? `
-            <button class="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold py-1 px-3 rounded transition duration-200 shadow">
-                👁️ Aufdecken
-            </button>
-        ` : `
-            <span class="text-xs font-semibold text-gray-400 bg-gray-800/80 border border-gray-600/40 px-2.5 py-1 rounded-md flex items-center gap-1">
-                🔒 Verdeckt
-            </span>
-        `;
+        let rowClasses = 'border p-2 rounded-lg flex items-center justify-between transition duration-200 select-none ';
+        if (isRevealedAny) {
+            rowClasses += 'bg-gray-800/40 border-gray-700/40 opacity-40 grayscale';
+        } else {
+            rowClasses += 'bg-gray-700/60 hover:bg-gray-700/80 border-gray-600/60';
+        }
 
+        if (isModerator && !isRevealedAny) {
+            rowClasses += ' cursor-grab active:cursor-grabbing hover:border-teal-400';
+            hintRow.setAttribute('draggable', 'true');
+
+            hintRow.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', i.toString());
+                hintRow.classList.add('ring-2', 'ring-teal-400');
+            });
+
+            hintRow.addEventListener('dragend', () => {
+                hintRow.classList.remove('ring-2', 'ring-teal-400');
+            });
+        }
+
+        let rightStatusHTML = '';
+        if (isRevealedAny) {
+            rightStatusHTML = `
+                <span class="text-[10px] font-semibold text-gray-400 bg-gray-800/80 border border-gray-600/40 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    ✓ Aufgedeckt
+                </span>
+            `;
+        } else if (isModerator) {
+            rightStatusHTML = `
+                <span class="text-[10px] font-semibold text-teal-300 bg-teal-500/20 border border-teal-500/40 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    🖐️ Auf Spieler ziehen
+                </span>
+            `;
+        } else {
+            rightStatusHTML = `
+                <span class="text-[10px] font-semibold text-gray-400 bg-gray-800/80 border border-gray-600/40 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    🔒 Verdeckt
+                </span>
+            `;
+        }
+
+        hintRow.className = rowClasses;
         hintRow.innerHTML = `
-            <div class="flex items-center gap-3">
-                <span class="w-6 h-6 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/40 text-xs font-bold flex items-center justify-center">
+            <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold flex items-center justify-center">
                     ${i}
                 </span>
-                <span class="text-sm font-medium text-gray-300 italic">Hinweis ${i} (Verdeckt)</span>
+                <span class="text-xs font-medium text-gray-300 italic">Hinweis ${i} (Verdeckt)</span>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2.5 py-1 rounded-full flex items-center gap-1">
+            <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                     🪙 ${sampleCosts[i - 1]}
                 </span>
-                ${modActionHTML}
+                ${rightStatusHTML}
             </div>
         `;
 
         hintsListContainer.appendChild(hintRow);
+    }
+}
+
+function assignHintToPlayer(targetPlayerName, hintIndex) {
+    if (!playerRevealedHints[targetPlayerName]) {
+        playerRevealedHints[targetPlayerName] = [];
+    }
+
+    if (!playerRevealedHints[targetPlayerName].includes(hintIndex)) {
+        playerRevealedHints[targetPlayerName].push(hintIndex);
+        globalRevealedHints.add(hintIndex);
+
+        renderHintList();
+        if (latestPlayers) {
+            updatePlayersUI(latestPlayers);
+        }
     }
 }
 
@@ -154,6 +233,11 @@ registerPlayerBtn.addEventListener('click', () => {
 
 // Spielerkarten rendern & auf Slots verteilen
 socket.on('update-players', (updatedPlayers) => {
+    latestPlayers = updatedPlayers;
+    updatePlayersUI(updatedPlayers);
+});
+
+function updatePlayersUI(updatedPlayers) {
     // Alle Slots leeren
     SLOT_IDS.forEach(slotId => {
         const slotEl = document.getElementById(slotId);
@@ -174,11 +258,11 @@ socket.on('update-players', (updatedPlayers) => {
             localStorage.setItem('playerScore', player.score);
         }
     });
-});
+}
 
 function createPlayerCard(player) {
     const card = document.createElement('div');
-    card.className = 'player-card w-full p-4 flex flex-col items-center text-center border border-gray-700/60 relative overflow-hidden';
+    card.className = 'player-card w-full p-3 flex flex-col items-center text-center border border-gray-700/60 relative overflow-hidden transition-all duration-200';
     
     // Farblicher oberer Akzent
     const topBar = document.createElement('div');
@@ -187,12 +271,12 @@ function createPlayerCard(player) {
     card.appendChild(topBar);
 
     const nameEl = document.createElement('h2');
-    nameEl.className = 'text-lg font-bold mb-1 truncate w-full';
+    nameEl.className = 'text-base font-bold mb-0.5 truncate w-full';
     nameEl.textContent = player.name;
     nameEl.style.color = player.color || '#ffffff';
 
     const coinsEl = document.createElement('div');
-    coinsEl.className = 'text-2xl font-extrabold my-1 text-amber-400 flex items-center justify-center gap-1 select-none';
+    coinsEl.className = 'text-xl font-extrabold my-0.5 text-amber-400 flex items-center justify-center gap-1 select-none';
     coinsEl.innerHTML = `🪙 <span class="text-white">${player.score || 0}</span>`;
 
     if (isModerator) {
@@ -204,10 +288,49 @@ function createPlayerCard(player) {
             e.preventDefault();
             socket.emit('subtract-point-from-player', player.name);
         };
+
+        // Drag and drop event listeners for moderator
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            card.classList.add('ring-2', 'ring-teal-400', 'bg-gray-800');
+        });
+
+        card.addEventListener('dragleave', () => {
+            card.classList.remove('ring-2', 'ring-teal-400', 'bg-gray-800');
+        });
+
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            card.classList.remove('ring-2', 'ring-teal-400', 'bg-gray-800');
+            const hintIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            if (hintIndex && !isNaN(hintIndex)) {
+                assignHintToPlayer(player.name, hintIndex);
+            }
+        });
     }
 
     card.appendChild(nameEl);
     card.appendChild(coinsEl);
+
+    // Aufgedeckte Hinweise für diesen Spieler unter der Karte
+    const hints = playerRevealedHints[player.name] || [];
+    if (hints.length > 0) {
+        const hintsContainer = document.createElement('div');
+        hintsContainer.className = 'w-full mt-2 pt-2 border-t border-gray-700/60 flex flex-col gap-1 text-left';
+        
+        hints.forEach(hintNum => {
+            const hintBadge = document.createElement('div');
+            hintBadge.className = 'bg-teal-950/70 border border-teal-500/40 text-teal-200 text-[11px] px-2 py-1 rounded flex items-center justify-between gap-1 shadow-sm';
+            hintBadge.innerHTML = `
+                <span class="font-semibold truncate">💡 Hinweis ${hintNum}</span>
+                <span class="text-[10px] text-teal-400/80 italic font-normal">Aufgedeckt</span>
+            `;
+            hintsContainer.appendChild(hintBadge);
+        });
+
+        card.appendChild(hintsContainer);
+    }
+
     return card;
 }
 

@@ -19,10 +19,10 @@
             transition: all 0.3s ease;
         }
         .slot-container {
-            min-height: 120px;
+            min-height: 100px;
             width: 100%;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
         }
     </style>
@@ -70,11 +70,11 @@
             </span>
         </div>
 
-        <!-- 3-Spalten Layout: Links (3 Spieler), Mitte (Hinweisliste), Rechts (3 Spieler) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch my-auto">
+        <!-- 3-Spalten Layout: Links (3 Spieler), Mitte (Schmale Hinweisliste), Rechts (3 Spieler) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start my-auto">
             
             <!-- Linke Spalte: Spieler 1, 5, 3 (Top, Mid, Bot) -->
-            <div class="lg:col-span-3 flex flex-col justify-between gap-4">
+            <div class="lg:col-span-4 flex flex-col gap-5">
                 <!-- Slot 0: Top-Left (Spieler 1) -->
                 <div id="slot-0" class="slot-container"></div>
                 <!-- Slot 4: Mid-Left (Spieler 5) -->
@@ -83,34 +83,34 @@
                 <div id="slot-2" class="slot-container"></div>
             </div>
 
-            <!-- Mittlere Spalte: Hinweisliste -->
-            <div class="lg:col-span-6 flex flex-col gap-3 bg-gray-800/60 p-5 rounded-2xl border border-gray-700/80 shadow-2xl backdrop-blur-md">
+            <!-- Mittlere Spalte: Schmalere Hinweisliste -->
+            <div class="lg:col-span-4 flex flex-col gap-2.5 bg-gray-800/60 p-3.5 rounded-2xl border border-gray-700/80 shadow-2xl backdrop-blur-md">
                 
                 <!-- Bonushinweis (Große Zeile ganz oben) -->
-                <div id="bonus-hint-card" class="bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border-2 border-yellow-500/60 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl sm:text-3xl">⭐</span>
+                <div id="bonus-hint-card" class="bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border-2 border-yellow-500/60 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-lg">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl sm:text-2xl">⭐</span>
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-widest text-yellow-400 block">Bonushinweis für Alle</span>
-                            <span id="bonus-hint-text" class="text-base sm:text-lg font-semibold text-gray-300 italic">Verdeckt</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-yellow-400 block">Bonushinweis für Alle</span>
+                            <span id="bonus-hint-text" class="text-xs sm:text-sm font-semibold text-gray-300 italic">Verdeckt</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold text-yellow-300 bg-yellow-500/20 border border-yellow-500/40 px-3 py-1 rounded-full flex items-center gap-1">
+                        <span class="text-xs font-semibold text-yellow-300 bg-yellow-500/20 border border-yellow-500/40 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                             🔒 Verdeckt
                         </span>
                     </div>
                 </div>
 
                 <!-- 10 Hinweise (Kleinere Zeilen) -->
-                <div id="hints-list" class="flex flex-col gap-2 mt-1">
+                <div id="hints-list" class="flex flex-col gap-1.5 mt-1">
                     <!-- Wird dynamisch per JS befüllt -->
                 </div>
 
             </div>
 
             <!-- Rechte Spalte: Spieler 2, 6, 4 (Top, Mid, Bot) -->
-            <div class="lg:col-span-3 flex flex-col justify-between gap-4">
+            <div class="lg:col-span-4 flex flex-col gap-5">
                 <!-- Slot 1: Top-Right (Spieler 2) -->
                 <div id="slot-1" class="slot-container"></div>
                 <!-- Slot 5: Mid-Right (Spieler 6) -->
