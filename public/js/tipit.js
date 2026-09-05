@@ -481,7 +481,7 @@ function createPlayerCard(player) {
     } else if (isModerator) {
         const answerDisplay = document.createElement('div');
         answerDisplay.className = 'w-full min-h-9 mt-2 p-2 rounded-lg bg-gray-900/70 border border-gray-700 text-xs text-gray-200 text-center break-words';
-        answerDisplay.textContent = player.text || 'Noch keine Antwort';
+        answerDisplay.textContent = player.text || '';
         card.appendChild(answerDisplay);
     } else {
         const hiddenAnswer = document.createElement('div');
@@ -492,26 +492,32 @@ function createPlayerCard(player) {
 
     // Auf der Karte stehen nur die Titel; der Tipp-Text wird privat am unteren Rand angezeigt.
     const hints = playerRevealedHints[player.name] || [];
-    if (hints.length > 0) {
-        const hintsContainer = document.createElement('div');
-        hintsContainer.className = 'w-full mt-2 pt-2 border-t border-gray-700/60 flex flex-col gap-1.5 text-left';
-        
-        hints.forEach(hintNum => {
+    const hintsContainer = document.createElement('div');
+    hintsContainer.className = 'w-full mt-2 pt-2 border-t border-gray-700/60 flex flex-col gap-1.5 text-left';
+
+    for (let slotIndex = 0; slotIndex < 2; slotIndex++) {
+        const hintNum = hints[slotIndex];
+        const hintBadge = document.createElement('div');
+        hintBadge.className = 'h-8 bg-teal-950/80 border border-teal-500/50 text-teal-200 text-xs px-2 py-1.5 rounded-lg shadow-sm flex items-center';
+
+        if (hintNum) {
             const hintObj = currentHints.find(h => h.id === hintNum);
             const title = hintObj ? hintObj.title : `Hinweis ${hintNum}`;
 
-            const hintBadge = document.createElement('div');
-            hintBadge.className = 'bg-teal-950/80 border border-teal-500/50 text-teal-200 text-xs px-2 py-1.5 rounded-lg shadow-sm';
             hintBadge.innerHTML = `
                 <div class="font-bold text-teal-300 text-[11px] flex items-center gap-1">
                     <span>💡</span> <span class="truncate">${escapeHtml(title)}</span>
                 </div>
             `;
-            hintsContainer.appendChild(hintBadge);
-        });
+        } else {
+            hintBadge.classList.add('border-gray-800', 'bg-gray-900/30');
+            hintBadge.classList.remove('border-teal-500/50', 'bg-teal-950/80');
+        }
 
-        card.appendChild(hintsContainer);
+        hintsContainer.appendChild(hintBadge);
     }
+
+    card.appendChild(hintsContainer);
 
     return card;
 }

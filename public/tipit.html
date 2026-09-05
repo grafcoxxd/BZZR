@@ -60,7 +60,7 @@
     </div>
 
     <!-- Haupt-Spielfeld (wird nach Beitritt sichtbar) -->
-    <div id="game-container" class="w-full max-w-[1550px] hidden flex-grow flex flex-col justify-start my-auto py-2 pb-36">
+    <div id="game-container" class="w-full max-w-[1550px] hidden flex-grow flex flex-col justify-start my-auto py-4">
         
         <!-- Header / Game Title -->
         <div class="text-center mb-4 flex items-center justify-center gap-3">
@@ -74,7 +74,7 @@
         </div>
 
         <!-- 3-Spalten Layout: Links (3 Spieler), Mitte (Hinweisliste), Rechts (3 Spieler) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-3">
             
             <!-- Linke Spalte: Spieler 1, 5, 3 (Top, Mid, Bot) -->
             <div class="lg:col-span-4 flex flex-col gap-5 items-center lg:items-end">
@@ -127,10 +127,10 @@
         </div>
     </div>
 
-    <aside id="personalHintsPanel" class="fixed inset-x-0 bottom-0 z-40 hidden border-t border-teal-500/40 bg-gray-900/95 p-3 shadow-2xl backdrop-blur-md">
+    <aside id="personalHintsPanel" class="hidden w-full max-w-4xl mt-3 mb-4 border border-teal-500/40 rounded-xl bg-gray-900/95 p-3 shadow-xl">
         <div class="mx-auto w-full max-w-4xl">
             <h2 class="mb-2 text-center text-xs font-bold uppercase tracking-wider text-teal-300">Deine gekauften Hinweise</h2>
-            <div id="personalHintsList" class="flex max-h-24 flex-wrap justify-center gap-2 overflow-y-auto"></div>
+            <div id="personalHintsList" class="flex min-h-24 max-h-48 flex-wrap justify-center gap-2 overflow-y-auto"></div>
         </div>
     </aside>
 
