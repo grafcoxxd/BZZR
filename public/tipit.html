@@ -108,6 +108,11 @@
                     <!-- Wird dynamisch per JS befüllt -->
                 </div>
 
+                <aside id="personalHintsPanel" class="hidden w-full mt-1 bg-gray-900/95 p-3">
+                    <h2 class="mb-2 text-center text-xs font-bold uppercase tracking-wider text-teal-300">Deine gekauften Hinweise</h2>
+                    <div id="personalHintsList" class="flex min-h-64 flex-wrap justify-center gap-2"></div>
+                </aside>
+
             </div>
 
             <!-- Rechte Spalte: Spieler 2, 6, 4 (Top, Mid, Bot) -->
@@ -126,13 +131,6 @@
             <p id="tipitStatus" class="text-lg text-yellow-300 font-semibold"></p>
         </div>
     </div>
-
-    <aside id="personalHintsPanel" class="hidden w-full max-w-xl mt-3 mb-4 bg-gray-900/95 p-3 shadow-xl">
-        <div class="mx-auto w-full">
-            <h2 class="mb-2 text-center text-xs font-bold uppercase tracking-wider text-teal-300">Deine gekauften Hinweise</h2>
-            <div id="personalHintsList" class="flex min-h-40 flex-wrap justify-center gap-2"></div>
-        </div>
-    </aside>
 
     <!-- Modal Overlay für den Moderator (Hinweise bearbeiten) -->
     <div id="modConfigModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
