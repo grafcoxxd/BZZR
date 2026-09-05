@@ -281,7 +281,7 @@ function renderPersonalHints() {
         if (!hintObj) return;
 
         const hintCard = document.createElement('div');
-        hintCard.className = 'min-w-[180px] max-w-xs rounded-lg border border-teal-500/50 bg-teal-950/80 px-3 py-2 text-left text-xs shadow-sm';
+        hintCard.className = 'min-w-0 rounded-lg border border-teal-500/50 bg-teal-950/80 px-2.5 py-2 text-left text-xs shadow-sm';
         hintCard.innerHTML = `
             <div class="mb-0.5 font-bold text-teal-300">💡 ${escapeHtml(hintObj.title)}</div>
             <div class="font-medium leading-snug text-gray-200">${escapeHtml(hintObj.text)}</div>

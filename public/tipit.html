@@ -86,8 +86,9 @@
                 <div id="slot-2" class="slot-container"></div>
             </div>
 
-            <!-- Mittlere Spalte: Hinweisliste -->
-            <div class="lg:col-span-4 flex flex-col gap-2.5 bg-gray-800/60 p-3 sm:p-4 rounded-2xl border border-gray-700/80 shadow-2xl backdrop-blur-md max-w-xl w-full mx-auto">
+            <!-- Mittlere Spalte: Hinweisliste und persönliche Hinweise -->
+            <div class="lg:col-span-4 flex flex-col gap-3 max-w-xl w-full mx-auto">
+                <section class="flex flex-col gap-2.5 bg-gray-800/60 p-3 sm:p-4 rounded-2xl border border-gray-700/80 shadow-2xl backdrop-blur-md">
                 
                 <!-- Bonushinweis (Große Zeile ganz oben) -->
                 <div id="bonus-hint-card" class="bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border-2 border-yellow-500/60 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-lg">
@@ -108,11 +109,12 @@
                     <!-- Wird dynamisch per JS befüllt -->
                 </div>
 
-                <aside id="personalHintsPanel" class="hidden w-full mt-1 bg-gray-900/95 p-3">
-                    <h2 class="mb-2 text-center text-xs font-bold uppercase tracking-wider text-teal-300">Deine gekauften Hinweise</h2>
-                    <div id="personalHintsList" class="flex min-h-64 flex-wrap justify-center gap-2"></div>
-                </aside>
+                </section>
 
+                <aside id="personalHintsPanel" class="hidden w-full">
+                    <h2 class="mb-2 text-center text-xs font-bold uppercase tracking-wider text-teal-300">Deine gekauften Hinweise</h2>
+                    <div id="personalHintsList" class="grid grid-cols-2 gap-2"></div>
+                </aside>
             </div>
 
             <!-- Rechte Spalte: Spieler 2, 6, 4 (Top, Mid, Bot) -->
