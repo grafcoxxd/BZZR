@@ -60,7 +60,7 @@
     </div>
 
     <!-- Haupt-Spielfeld (wird nach Beitritt sichtbar) -->
-    <div id="game-container" class="w-full max-w-[1550px] hidden flex-grow flex flex-col justify-between my-auto py-4">
+    <div id="game-container" class="w-full max-w-[1550px] hidden flex-grow flex flex-col justify-start my-auto py-2 pb-36">
         
         <!-- Header / Game Title -->
         <div class="text-center mb-4 flex items-center justify-center gap-3">
@@ -74,10 +74,10 @@
         </div>
 
         <!-- 3-Spalten Layout: Links (3 Spieler), Mitte (Hinweisliste), Rechts (3 Spieler) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start my-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             <!-- Linke Spalte: Spieler 1, 5, 3 (Top, Mid, Bot) -->
-            <div class="lg:col-span-3 flex flex-col gap-5 items-center lg:items-end">
+            <div class="lg:col-span-4 flex flex-col gap-5 items-center lg:items-end">
                 <!-- Slot 0: Top-Left (Spieler 1) -->
                 <div id="slot-0" class="slot-container"></div>
                 <!-- Slot 4: Mid-Left (Spieler 5) -->
@@ -87,7 +87,7 @@
             </div>
 
             <!-- Mittlere Spalte: Hinweisliste -->
-            <div class="lg:col-span-6 flex flex-col gap-2.5 bg-gray-800/60 p-4 sm:p-5 rounded-2xl border border-gray-700/80 shadow-2xl backdrop-blur-md max-w-2xl w-full mx-auto">
+            <div class="lg:col-span-4 flex flex-col gap-2.5 bg-gray-800/60 p-3 sm:p-4 rounded-2xl border border-gray-700/80 shadow-2xl backdrop-blur-md max-w-xl w-full mx-auto">
                 
                 <!-- Bonushinweis (Große Zeile ganz oben) -->
                 <div id="bonus-hint-card" class="bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border-2 border-yellow-500/60 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-lg">
@@ -111,7 +111,7 @@
             </div>
 
             <!-- Rechte Spalte: Spieler 2, 6, 4 (Top, Mid, Bot) -->
-            <div class="lg:col-span-3 flex flex-col gap-5 items-center lg:items-start">
+            <div class="lg:col-span-4 flex flex-col gap-5 items-center lg:items-start">
                 <!-- Slot 1: Top-Right (Spieler 2) -->
                 <div id="slot-1" class="slot-container"></div>
                 <!-- Slot 5: Mid-Right (Spieler 6) -->
@@ -126,6 +126,13 @@
             <p id="tipitStatus" class="text-lg text-yellow-300 font-semibold"></p>
         </div>
     </div>
+
+    <aside id="personalHintsPanel" class="fixed inset-x-0 bottom-0 z-40 hidden border-t border-teal-500/40 bg-gray-900/95 p-3 shadow-2xl backdrop-blur-md">
+        <div class="mx-auto w-full max-w-4xl">
+            <h2 class="mb-2 text-center text-xs font-bold uppercase tracking-wider text-teal-300">Deine gekauften Hinweise</h2>
+            <div id="personalHintsList" class="flex max-h-24 flex-wrap justify-center gap-2 overflow-y-auto"></div>
+        </div>
+    </aside>
 
     <!-- Modal Overlay für den Moderator (Hinweise bearbeiten) -->
     <div id="modConfigModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
