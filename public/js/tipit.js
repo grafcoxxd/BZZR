@@ -60,16 +60,16 @@ const SLOT_IDS = [
 ];
 
 const HINT_COLORS = [
-    { background: '#315d70', border: '#78bdd4', text: '#d6f4fc' },
-    { background: '#41694f', border: '#8bc9a0', text: '#dcf7e5' },
-    { background: '#796340', border: '#d9b877', text: '#fff3d6' },
-    { background: '#80525a', border: '#e3949d', text: '#ffe0e4' },
-    { background: '#65537c', border: '#b8a1d7', text: '#f0e7ff' },
-    { background: '#3d7470', border: '#83cbc2', text: '#d9faf5' },
-    { background: '#805f49', border: '#dea47b', text: '#ffeadb' },
-    { background: '#80566b', border: '#e5a0bb', text: '#ffe2ed' },
-    { background: '#4e6684', border: '#92b9e6', text: '#e3efff' },
-    { background: '#59733f', border: '#b4d682', text: '#effadc' }
+    { background: '#28627a', border: 'transparent', text: '#d6f4fc' },
+    { background: '#35714a', border: 'transparent', text: '#dcf7e5' },
+    { background: '#85652c', border: 'transparent', text: '#fff3d6' },
+    { background: '#8b4652', border: 'transparent', text: '#ffe0e4' },
+    { background: '#604181', border: 'transparent', text: '#f0e7ff' },
+    { background: '#247a73', border: 'transparent', text: '#d9faf5' },
+    { background: '#8d5738', border: 'transparent', text: '#ffeadb' },
+    { background: '#91495f', border: 'transparent', text: '#ffe2ed' },
+    { background: '#3e638d', border: 'transparent', text: '#e3efff' },
+    { background: '#4f7831', border: 'transparent', text: '#effadc' }
 ];
 
 function getHintColor(hintIndex) {
