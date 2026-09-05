@@ -356,6 +356,18 @@ socket.on('update-players', (updatedPlayers) => {
     updatePlayersUI(updatedPlayers);
 });
 
+socket.on('update-text', ({ name, text }) => {
+    const player = latestPlayers.find(entry => entry.name === name);
+    if (!player) return;
+
+    player.text = text;
+
+    // Der eigene Eingabewert ist bereits sichtbar; ein Neurendern würde den Fokus entfernen.
+    if (isModerator || name !== playerName) {
+        updatePlayersUI(latestPlayers);
+    }
+});
+
 function updatePlayersUI(updatedPlayers) {
     // Alle Slots leeren
     SLOT_IDS.forEach(slotId => {
@@ -430,6 +442,29 @@ function createPlayerCard(player) {
 
     card.appendChild(nameEl);
     card.appendChild(coinsEl);
+
+    const isOwnPlayer = playerName && player.name === playerName;
+    if (isOwnPlayer) {
+        const answerInput = document.createElement('input');
+        answerInput.type = 'text';
+        answerInput.placeholder = 'Deine Antwort...';
+        answerInput.value = player.text || '';
+        answerInput.className = 'w-full mt-2 p-2 rounded-lg bg-gray-700 border border-gray-600 text-white text-xs text-center focus:outline-none focus:ring-2 focus:ring-teal-400';
+        answerInput.addEventListener('input', () => {
+            socket.emit('player-typing', answerInput.value);
+        });
+        card.appendChild(answerInput);
+    } else if (isModerator) {
+        const answerDisplay = document.createElement('div');
+        answerDisplay.className = 'w-full min-h-9 mt-2 p-2 rounded-lg bg-gray-900/70 border border-gray-700 text-xs text-gray-200 text-left break-words';
+        answerDisplay.textContent = player.text || 'Noch keine Antwort';
+        card.appendChild(answerDisplay);
+    } else {
+        const hiddenAnswer = document.createElement('div');
+        hiddenAnswer.className = 'w-full h-9 mt-2 rounded-lg bg-gray-900/50 border border-gray-800';
+        hiddenAnswer.setAttribute('aria-hidden', 'true');
+        card.appendChild(hiddenAnswer);
+    }
 
     // Aufgedeckte Hinweise für diesen Spieler unter der Karte
     const isOwnerOrMod = isModerator || (playerName && player.name === playerName);

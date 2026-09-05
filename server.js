@@ -137,7 +137,7 @@ io.on('connection', (socket) => {
     const player = players.get(socket.id);
     if (player) {
       player.text = text;
-      io.emit('update-text', { name: player.name, text: player.text });
+      io.to('moderator-room').emit('update-text', { name: player.name, text: player.text });
     }
   });
 
