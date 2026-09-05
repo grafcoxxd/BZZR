@@ -60,16 +60,16 @@ const SLOT_IDS = [
 ];
 
 const HINT_COLORS = [
-    { background: '#164e63', border: '#0891b2', text: '#a5f3fc' },
-    { background: '#14532d', border: '#22c55e', text: '#bbf7d0' },
-    { background: '#713f12', border: '#f59e0b', text: '#fef3c7' },
-    { background: '#7f1d1d', border: '#ef4444', text: '#fecaca' },
-    { background: '#4c1d95', border: '#a855f7', text: '#e9d5ff' },
-    { background: '#0f766e', border: '#2dd4bf', text: '#ccfbf1' },
-    { background: '#9a3412', border: '#fb923c', text: '#ffedd5' },
-    { background: '#9f1239', border: '#fb7185', text: '#ffe4e6' },
-    { background: '#1e3a8a', border: '#60a5fa', text: '#dbeafe' },
-    { background: '#3f6212', border: '#a3e635', text: '#ecfccb' }
+    { background: '#315d70', border: '#78bdd4', text: '#d6f4fc' },
+    { background: '#41694f', border: '#8bc9a0', text: '#dcf7e5' },
+    { background: '#796340', border: '#d9b877', text: '#fff3d6' },
+    { background: '#80525a', border: '#e3949d', text: '#ffe0e4' },
+    { background: '#65537c', border: '#b8a1d7', text: '#f0e7ff' },
+    { background: '#3d7470', border: '#83cbc2', text: '#d9faf5' },
+    { background: '#805f49', border: '#dea47b', text: '#ffeadb' },
+    { background: '#80566b', border: '#e5a0bb', text: '#ffe2ed' },
+    { background: '#4e6684', border: '#92b9e6', text: '#e3efff' },
+    { background: '#59733f', border: '#b4d682', text: '#effadc' }
 ];
 
 function getHintColor(hintIndex) {
@@ -328,9 +328,9 @@ function renderHintList() {
         
         let rowClasses = 'border p-2 rounded-lg flex items-center justify-between transition duration-200 select-none ';
         if (isRevealedAny) {
-            rowClasses += 'bg-gray-800/40 border-gray-700/40 opacity-40 grayscale';
+            rowClasses += 'opacity-55 grayscale-[35%]';
         } else {
-            rowClasses += 'bg-gray-700/60 hover:bg-gray-700/80 border-gray-600/60';
+            rowClasses += 'hover:brightness-110';
         }
 
         if (isModerator && !isRevealedAny) {
@@ -347,20 +347,20 @@ function renderHintList() {
             });
         }
 
+        const receivingPlayerName = Object.entries(playerRevealedHints)
+            .find(([, hintNumbers]) => hintNumbers.includes(i))?.[0];
         let rightStatusHTML = '';
         if (isRevealedAny) {
             rightStatusHTML = `
-                <span class="text-[10px] font-semibold text-gray-400 bg-gray-800/80 border border-gray-600/40 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    ✓ Aufgedeckt
+                <span class="max-w-24 truncate text-[10px] font-semibold text-gray-200 bg-gray-900/30 border border-white/20 px-2 py-0.5 rounded-md">
+                    ${escapeHtml(receivingPlayerName || 'Aufgedeckt')}
                 </span>
             `;
         }
 
         hintRow.className = rowClasses;
-        if (!isRevealedAny) {
-            hintRow.style.backgroundColor = color.background;
-            hintRow.style.borderColor = color.border;
-        }
+        hintRow.style.backgroundColor = color.background;
+        hintRow.style.borderColor = color.border;
         hintRow.innerHTML = `
             <div class="flex min-w-0 items-center gap-2 overflow-hidden mr-2">
                 <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold flex items-center justify-center shrink-0">

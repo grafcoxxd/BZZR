@@ -180,8 +180,13 @@ io.on('connection', (socket) => {
       tipitState.playerRevealedHints[playerName] = [];
     }
 
-    if (!tipitState.playerRevealedHints[playerName].includes(hintIndex)) {
-      tipitState.playerRevealedHints[playerName].push(hintIndex);
+    const playerHints = tipitState.playerRevealedHints[playerName];
+    if (playerHints.length >= 2 || playerHints.includes(hintIndex)) {
+      return;
+    }
+
+    if (!playerHints.includes(hintIndex)) {
+      playerHints.push(hintIndex);
 
       // Münzen vom Spieler abziehen
       const player = Array.from(players.values()).find(p => p.name === playerName);
