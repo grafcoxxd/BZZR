@@ -12,11 +12,22 @@ const playerNameInput = document.getElementById('playerNameInput');
 const nameEntryDiv = document.getElementById('nameEntry');
 const buzzerSectionDiv = document.getElementById('buzzer-section');
 const playersContainer = document.getElementById('playersContainer');
+const tipitLink = document.getElementById('tipitLink');
 const gameVolumeSlider = document.getElementById('gameVolume');
 const liveVolumeSlider = document.getElementById('liveVolume');
 
 const audio = new Audio();
 let playerName = null;
+
+const tipitHintColors = [
+    '#28627a', '#35714a', '#85652c', '#8b4652', '#604181',
+    '#247a73', '#8d5738', '#91495f', '#3e638d', '#4f7831'
+];
+
+if (tipitLink) {
+    const randomColor = tipitHintColors[Math.floor(Math.random() * tipitHintColors.length)];
+    tipitLink.style.backgroundColor = randomColor;
+}
 
 // --- Lautstärke-Steuerung ---
 const updateGameVolume = () => {
