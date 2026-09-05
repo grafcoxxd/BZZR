@@ -235,9 +235,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('tipit-reset', () => {
-    players.forEach((player) => {
-      player.score = 15;
-    });
     tipitState = {
       playerRevealedHints: {},
       globalRevealedHints: [],
@@ -245,9 +242,15 @@ io.on('connection', (socket) => {
       bonusHintText: "Das ist ein Bonushinweis für alle!",
       hints: JSON.parse(JSON.stringify(defaultHints))
     };
+    io.emit('tipit-state-update', tipitState);
+  });
+
+  socket.on('tipit-reset-coins', () => {
+    players.forEach((player) => {
+      player.score = 15;
+    });
     io.emit('tipit-coins-reset', 15);
     io.emit('update-players', Array.from(players.values()));
-    io.emit('tipit-state-update', tipitState);
   });
 });
 

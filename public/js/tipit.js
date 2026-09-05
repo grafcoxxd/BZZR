@@ -18,6 +18,7 @@ const closeConfigBtn = document.getElementById('closeConfigBtn');
 const cancelConfigBtn = document.getElementById('cancelConfigBtn');
 const saveConfigBtn = document.getElementById('saveConfigBtn');
 const resetTipitBtn = document.getElementById('resetTipitBtn');
+const resetTipitCoinsBtn = document.getElementById('resetTipitCoinsBtn');
 const cfgBonusHint = document.getElementById('cfgBonusHint');
 const cfgHintsContainer = document.getElementById('cfgHintsContainer');
 const personalHintsPanel = document.getElementById('personalHintsPanel');
@@ -146,9 +147,16 @@ function setupModeratorUI() {
     if (saveConfigBtn) saveConfigBtn.addEventListener('click', saveConfigModal);
     if (resetTipitBtn) {
         resetTipitBtn.addEventListener('click', () => {
-            if (confirm("Möchtest du wirklich den gesamten TipIt-Fortschritt zurücksetzen?")) {
+            if (confirm("Möchtest du wirklich alle TipIt-Hinweise zurücksetzen?")) {
                 socket.emit('tipit-reset');
                 closeConfigModal();
+            }
+        });
+    }
+    if (resetTipitCoinsBtn) {
+        resetTipitCoinsBtn.addEventListener('click', () => {
+            if (confirm("Möchtest du das Gold aller Spieler auf 15 zurücksetzen?")) {
+                socket.emit('tipit-reset-coins');
             }
         });
     }
@@ -463,6 +471,10 @@ function createPlayerCard(player) {
     coinsEl.className = 'text-xl font-extrabold my-0.5 text-amber-400 flex items-center justify-center gap-1 select-none';
     coinsEl.innerHTML = `💰 <span class="text-white">${player.score || 0}</span>`;
 
+    const coinControls = document.createElement('div');
+    coinControls.className = 'flex items-center justify-center gap-1';
+    coinControls.appendChild(coinsEl);
+
     if (isModerator) {
         coinsEl.classList.add('cursor-pointer', 'hover:scale-110', 'transition-transform');
         coinsEl.title = 'Linksklick: +1 Münze | Rechtsklick: -1 Münze';
@@ -494,18 +506,19 @@ function createPlayerCard(player) {
     }
 
     card.appendChild(nameEl);
-    card.appendChild(coinsEl);
 
     if (isModerator) {
         const correctAnswerBtn = document.createElement('button');
-        correctAnswerBtn.className = 'mt-2 h-7 w-9 rounded-lg bg-amber-500 text-sm font-bold text-gray-900 transition hover:bg-amber-400';
+        correctAnswerBtn.className = 'text-base leading-none transition-transform hover:scale-125';
         correctAnswerBtn.textContent = '⭐';
         correctAnswerBtn.title = 'Richtige Antwort: +20 Gold';
         correctAnswerBtn.addEventListener('click', () => {
             socket.emit('tipit-correct-answer', player.name);
         });
-        card.appendChild(correctAnswerBtn);
+        coinControls.appendChild(correctAnswerBtn);
     }
+
+    card.appendChild(coinControls);
 
     const isOwnPlayer = playerName && player.name === playerName;
     if (isOwnPlayer) {
