@@ -175,6 +175,11 @@ io.on('connection', (socket) => {
   socket.on('tipit-assign-hint', ({ playerName, hintIndex }) => {
     const hintObj = tipitState.hints.find(h => h.id === hintIndex);
     const cost = hintObj ? (parseInt(hintObj.cost) || 0) : 0;
+    const player = Array.from(players.values()).find(p => p.name === playerName);
+
+    if (!player || player.score < cost) {
+      return;
+    }
 
     if (!tipitState.playerRevealedHints[playerName]) {
       tipitState.playerRevealedHints[playerName] = [];
@@ -189,17 +194,22 @@ io.on('connection', (socket) => {
       playerHints.push(hintIndex);
 
       // Münzen vom Spieler abziehen
-      const player = Array.from(players.values()).find(p => p.name === playerName);
-      if (player) {
-        player.score = Math.max(0, player.score - cost);
-        io.emit('update-players', Array.from(players.values()));
-      }
+      player.score -= cost;
+      io.emit('update-players', Array.from(players.values()));
     }
 
     if (!tipitState.globalRevealedHints.includes(hintIndex)) {
       tipitState.globalRevealedHints.push(hintIndex);
     }
     io.emit('tipit-state-update', tipitState);
+  });
+
+  socket.on('tipit-correct-answer', (playerName) => {
+    const player = Array.from(players.values()).find(p => p.name === playerName);
+    if (player) {
+      player.score += 20;
+      io.emit('update-players', Array.from(players.values()));
+    }
   });
 
   socket.on('tipit-toggle-bonus', (revealed) => {
@@ -225,6 +235,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('tipit-reset', () => {
+    players.forEach((player) => {
+      player.score = 15;
+    });
     tipitState = {
       playerRevealedHints: {},
       globalRevealedHints: [],
@@ -232,6 +245,8 @@ io.on('connection', (socket) => {
       bonusHintText: "Das ist ein Bonushinweis für alle!",
       hints: JSON.parse(JSON.stringify(defaultHints))
     };
+    io.emit('tipit-coins-reset', 15);
+    io.emit('update-players', Array.from(players.values()));
     io.emit('tipit-state-update', tipitState);
   });
 });

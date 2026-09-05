@@ -369,9 +369,11 @@ function renderHintList() {
                 <span class="text-xs font-semibold truncate" style="color: ${color.text}">${escapeHtml(hintObj.title)}</span>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
-                <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    💰 ${hintObj.cost}
-                </span>
+                ${!isRevealedAny ? `
+                    <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        💰 ${hintObj.cost}
+                    </span>
+                ` : ''}
                 ${rightStatusHTML}
             </div>
         `;
@@ -392,8 +394,10 @@ registerPlayerBtn.addEventListener('click', () => {
     if (name) {
         playerName = name;
         localStorage.setItem('playerName', name);
-        const savedScore = parseInt(localStorage.getItem('playerScore')) || 0;
-        socket.emit('register-player', { name: playerName, score: savedScore });
+        const savedTipitCoins = localStorage.getItem('tipitCoins');
+        const startingCoins = savedTipitCoins === null ? 15 : parseInt(savedTipitCoins) || 0;
+        localStorage.setItem('tipitCoins', startingCoins);
+        socket.emit('register-player', { name: playerName, score: startingCoins });
         nameEntryDiv.classList.add('hidden');
         gameContainerDiv.classList.remove('hidden');
     }
@@ -435,7 +439,7 @@ function updatePlayersUI(updatedPlayers) {
         }
 
         if (player.name === playerName) {
-            localStorage.setItem('playerScore', player.score);
+            localStorage.setItem('tipitCoins', player.score);
         }
     });
 }
@@ -491,6 +495,17 @@ function createPlayerCard(player) {
 
     card.appendChild(nameEl);
     card.appendChild(coinsEl);
+
+    if (isModerator) {
+        const correctAnswerBtn = document.createElement('button');
+        correctAnswerBtn.className = 'mt-2 h-7 w-9 rounded-lg bg-amber-500 text-sm font-bold text-gray-900 transition hover:bg-amber-400';
+        correctAnswerBtn.textContent = '⭐';
+        correctAnswerBtn.title = 'Richtige Antwort: +20 Gold';
+        correctAnswerBtn.addEventListener('click', () => {
+            socket.emit('tipit-correct-answer', player.name);
+        });
+        card.appendChild(correctAnswerBtn);
+    }
 
     const isOwnPlayer = playerName && player.name === playerName;
     if (isOwnPlayer) {
@@ -561,10 +576,15 @@ socket.on('connect', () => {
     if (isModerator) {
         socket.emit('register-moderator');
     } else if (playerName) {
-        const savedScore = parseInt(localStorage.getItem('playerScore')) || 0;
-        socket.emit('register-player', { name: playerName, score: savedScore });
+        const savedTipitCoins = localStorage.getItem('tipitCoins');
+        const coins = savedTipitCoins === null ? 15 : parseInt(savedTipitCoins) || 0;
+        socket.emit('register-player', { name: playerName, score: coins });
     }
     if (tipitStatus) {
         tipitStatus.textContent = '';
     }
+});
+
+socket.on('tipit-coins-reset', (coins) => {
+    localStorage.setItem('tipitCoins', coins);
 });
