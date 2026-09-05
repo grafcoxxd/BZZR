@@ -59,6 +59,23 @@ const SLOT_IDS = [
     'slot-5'  // Mid-Right
 ];
 
+const HINT_COLORS = [
+    { background: '#164e63', border: '#0891b2', text: '#a5f3fc' },
+    { background: '#14532d', border: '#22c55e', text: '#bbf7d0' },
+    { background: '#713f12', border: '#f59e0b', text: '#fef3c7' },
+    { background: '#7f1d1d', border: '#ef4444', text: '#fecaca' },
+    { background: '#4c1d95', border: '#a855f7', text: '#e9d5ff' },
+    { background: '#0f766e', border: '#2dd4bf', text: '#ccfbf1' },
+    { background: '#9a3412', border: '#fb923c', text: '#ffedd5' },
+    { background: '#9f1239', border: '#fb7185', text: '#ffe4e6' },
+    { background: '#1e3a8a', border: '#60a5fa', text: '#dbeafe' },
+    { background: '#3f6212', border: '#a3e635', text: '#ecfccb' }
+];
+
+function getHintColor(hintIndex) {
+    return HINT_COLORS[(hintIndex - 1) % HINT_COLORS.length];
+}
+
 // --- Lautstärke-Steuerung ---
 const updateGameVolume = () => {
     const vol = parseFloat(gameVolumeSlider.value);
@@ -282,8 +299,11 @@ function renderPersonalHints() {
 
         const hintCard = document.createElement('div');
         hintCard.className = 'min-w-0 rounded-lg border border-teal-500/50 bg-teal-950/80 px-2.5 py-2 text-left text-xs shadow-sm';
+        const color = getHintColor(hintNum);
+        hintCard.style.backgroundColor = color.background;
+        hintCard.style.borderColor = color.border;
         hintCard.innerHTML = `
-            <div class="mb-0.5 font-bold text-teal-300">💡 ${escapeHtml(hintObj.title)}</div>
+            <div class="mb-0.5 font-bold truncate" style="color: ${color.text}">💡 ${escapeHtml(hintObj.title)}</div>
             <div class="font-medium leading-snug text-gray-200">${escapeHtml(hintObj.text)}</div>
         `;
         personalHintsList.appendChild(hintCard);
@@ -304,6 +324,7 @@ function renderHintList() {
         };
 
         const hintRow = document.createElement('div');
+        const color = getHintColor(i);
         
         let rowClasses = 'border p-2 rounded-lg flex items-center justify-between transition duration-200 select-none ';
         if (isRevealedAny) {
@@ -336,12 +357,16 @@ function renderHintList() {
         }
 
         hintRow.className = rowClasses;
+        if (!isRevealedAny) {
+            hintRow.style.backgroundColor = color.background;
+            hintRow.style.borderColor = color.border;
+        }
         hintRow.innerHTML = `
-            <div class="flex items-center gap-2 overflow-hidden mr-2">
+            <div class="flex min-w-0 items-center gap-2 overflow-hidden mr-2">
                 <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold flex items-center justify-center shrink-0">
                     ${i}
                 </span>
-                <span class="text-xs font-semibold text-gray-200 truncate">${escapeHtml(hintObj.title)}</span>
+                <span class="text-xs font-semibold truncate" style="color: ${color.text}">${escapeHtml(hintObj.title)}</span>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
                 <span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -503,10 +528,13 @@ function createPlayerCard(player) {
         if (hintNum) {
             const hintObj = currentHints.find(h => h.id === hintNum);
             const title = hintObj ? hintObj.title : `Hinweis ${hintNum}`;
+            const color = getHintColor(hintNum);
+            hintBadge.style.backgroundColor = color.background;
+            hintBadge.style.borderColor = color.border;
 
             hintBadge.innerHTML = `
-                <div class="font-bold text-teal-300 text-[11px] flex items-center gap-1">
-                    <span>💡</span> <span class="truncate">${escapeHtml(title)}</span>
+                <div class="min-w-0 w-full font-bold text-[11px] flex items-center gap-1" style="color: ${color.text}">
+                    <span class="shrink-0">💡</span> <span class="min-w-0 truncate">${escapeHtml(title)}</span>
                 </div>
             `;
         } else {
