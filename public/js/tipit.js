@@ -160,8 +160,8 @@ function setupModeratorUI() {
     if (closeConfigBtn) closeConfigBtn.addEventListener('click', closeConfigModal);
     if (cancelConfigBtn) cancelConfigBtn.addEventListener('click', closeConfigModal);
     if (saveConfigBtn) saveConfigBtn.addEventListener('click', saveConfigModal);
-    if (previousRoundBtn) previousRoundBtn.addEventListener('click', () => changeRound(activeRoundIndex - 1));
-    if (nextRoundBtn) nextRoundBtn.addEventListener('click', () => changeRound(activeRoundIndex + 1));
+    if (previousRoundBtn) previousRoundBtn.addEventListener('click', () => changeRound(editingRoundIndex - 1));
+    if (nextRoundBtn) nextRoundBtn.addEventListener('click', () => changeRound(editingRoundIndex + 1));
     if (resetTipitBtn) {
         resetTipitBtn.addEventListener('click', () => {
             if (confirm("Möchtest du wirklich alle TipIt-Hinweise zurücksetzen?")) {
@@ -201,6 +201,7 @@ function changeRound(nextRoundIndex) {
                 cost: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5][i]
             }))
         });
+        socket.emit('tipit-create-round');
     }
     if (nextRoundIndex >= rounds.length) return;
 
@@ -306,7 +307,12 @@ function getEditorConfig() {
 function saveEditorRoundDraft() {
     if (!modConfigModal || modConfigModal.classList.contains('hidden')) return;
 
-    rounds[editingRoundIndex] = getEditorConfig();
+    const configData = getEditorConfig();
+    rounds[editingRoundIndex] = configData;
+    socket.emit('tipit-save-round-draft', {
+        roundIndex: editingRoundIndex,
+        configData
+    });
 }
 
 function saveConfigModal() {
@@ -409,17 +415,10 @@ socket.on('tipit-state-update', (state) => {
         activeRoundIndex = state.activeRoundIndex;
     }
 
-    if (isModerator && modConfigModal && !modConfigModal.classList.contains('hidden')) {
-        editingRoundIndex = activeRoundIndex;
-    }
-
     updateBonusHintUI();
     updateModeratorTargetTerm();
     updateAnswerVisibility();
     updateRoundNavigation();
-    if (isModerator && modConfigModal && !modConfigModal.classList.contains('hidden')) {
-        openConfigModal();
-    }
     renderHintList();
     renderPersonalHints();
     if (latestPlayers && latestPlayers.length > 0) {

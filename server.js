@@ -288,6 +288,30 @@ io.on('connection', (socket) => {
     io.emit('tipit-state-update', tipitState);
   });
 
+  socket.on('tipit-save-round-draft', ({ roundIndex, configData }) => {
+    const draftRoundIndex = parseInt(roundIndex);
+    if (Number.isNaN(draftRoundIndex) || draftRoundIndex < 0 || draftRoundIndex >= tipitState.rounds.length || !configData) {
+      return;
+    }
+
+    tipitState.rounds[draftRoundIndex] = {
+      targetTerm: typeof configData.targetTerm === 'string' ? configData.targetTerm : '',
+      bonusHintText: typeof configData.bonusHintText === 'string' ? configData.bonusHintText : '',
+      hints: Array.isArray(configData.hints) ? configData.hints.map((hint, index) => ({
+        id: index + 1,
+        title: hint.title || `Hinweis ${index + 1}`,
+        text: hint.text || '',
+        cost: parseInt(hint.cost) >= 0 ? parseInt(hint.cost) : 1
+      })) : JSON.parse(JSON.stringify(defaultHints))
+    };
+    io.emit('tipit-state-update', tipitState);
+  });
+
+  socket.on('tipit-create-round', () => {
+    tipitState.rounds.push(createTipitRound());
+    io.emit('tipit-state-update', tipitState);
+  });
+
   socket.on('tipit-save-and-activate-round', ({ roundIndex, configData }) => {
     const nextRoundIndex = parseInt(roundIndex);
     if (Number.isNaN(nextRoundIndex) || nextRoundIndex < 0 || nextRoundIndex > tipitState.rounds.length) {
