@@ -28,13 +28,33 @@ const defaultHints = Array.from({ length: 10 }, (_, i) => ({
   cost: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5][i]
 }));
 
+function createTipitRound() {
+  return {
+    bonusHintText: "Das ist ein Bonushinweis für alle!",
+    hints: JSON.parse(JSON.stringify(defaultHints))
+  };
+}
+
 let tipitState = {
   playerRevealedHints: {},
   globalRevealedHints: [],
   bonusHintRevealed: false,
-  bonusHintText: "Das ist ein Bonushinweis für alle!",
-  hints: JSON.parse(JSON.stringify(defaultHints))
+  rounds: [createTipitRound()],
+  activeRoundIndex: 0,
+  ...createTipitRound()
 };
+
+function activateTipitRound(roundIndex) {
+  const round = tipitState.rounds[roundIndex];
+  if (!round) return;
+
+  tipitState.activeRoundIndex = roundIndex;
+  tipitState.bonusHintText = round.bonusHintText;
+  tipitState.hints = JSON.parse(JSON.stringify(round.hints));
+  tipitState.playerRevealedHints = {};
+  tipitState.globalRevealedHints = [];
+  tipitState.bonusHintRevealed = false;
+}
 
 io.on('connection', (socket) => {
   console.log('Ein Benutzer ist verbunden');
@@ -230,17 +250,35 @@ io.on('connection', (socket) => {
           cost: parseInt(h.cost) >= 0 ? parseInt(h.cost) : 1
         }));
       }
+      tipitState.rounds[tipitState.activeRoundIndex] = {
+        bonusHintText: tipitState.bonusHintText,
+        hints: JSON.parse(JSON.stringify(tipitState.hints))
+      };
     }
     io.emit('tipit-state-update', tipitState);
   });
 
+  socket.on('tipit-change-round', (roundIndex) => {
+    const nextRoundIndex = parseInt(roundIndex);
+    if (Number.isNaN(nextRoundIndex) || nextRoundIndex < 0 || nextRoundIndex > tipitState.rounds.length) {
+      return;
+    }
+    if (nextRoundIndex === tipitState.rounds.length) {
+      tipitState.rounds.push(createTipitRound());
+    }
+    activateTipitRound(nextRoundIndex);
+    io.emit('tipit-state-update', tipitState);
+  });
+
   socket.on('tipit-reset', () => {
+    const rounds = tipitState.rounds;
     tipitState = {
       playerRevealedHints: {},
       globalRevealedHints: [],
       bonusHintRevealed: false,
-      bonusHintText: "Das ist ein Bonushinweis für alle!",
-      hints: JSON.parse(JSON.stringify(defaultHints))
+      rounds,
+      activeRoundIndex: tipitState.activeRoundIndex,
+      ...rounds[tipitState.activeRoundIndex]
     };
     io.emit('tipit-state-update', tipitState);
   });

@@ -19,6 +19,8 @@ const cancelConfigBtn = document.getElementById('cancelConfigBtn');
 const saveConfigBtn = document.getElementById('saveConfigBtn');
 const resetTipitBtn = document.getElementById('resetTipitBtn');
 const resetTipitCoinsBtn = document.getElementById('resetTipitCoinsBtn');
+const previousRoundBtn = document.getElementById('previousRoundBtn');
+const nextRoundBtn = document.getElementById('nextRoundBtn');
 const cfgBonusHint = document.getElementById('cfgBonusHint');
 const cfgHintsContainer = document.getElementById('cfgHintsContainer');
 const personalHintsPanel = document.getElementById('personalHintsPanel');
@@ -37,6 +39,8 @@ let playerRevealedHints = {}; // { [playerName]: [hintIndex, ...] }
 let globalRevealedHints = new Set(); // Set of hintIndices revealed
 let bonusHintRevealed = false;
 let bonusHintText = "Das ist ein Bonushinweis für alle!";
+let activeRoundIndex = 0;
+let rounds = [];
 let currentHints = Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
     title: `Hinweis ${i + 1}`,
@@ -145,6 +149,8 @@ function setupModeratorUI() {
     if (closeConfigBtn) closeConfigBtn.addEventListener('click', closeConfigModal);
     if (cancelConfigBtn) cancelConfigBtn.addEventListener('click', closeConfigModal);
     if (saveConfigBtn) saveConfigBtn.addEventListener('click', saveConfigModal);
+    if (previousRoundBtn) previousRoundBtn.addEventListener('click', () => changeRound(activeRoundIndex - 1));
+    if (nextRoundBtn) nextRoundBtn.addEventListener('click', () => changeRound(activeRoundIndex + 1));
     if (resetTipitBtn) {
         resetTipitBtn.addEventListener('click', () => {
             if (confirm("Möchtest du wirklich alle TipIt-Hinweise zurücksetzen?")) {
@@ -160,6 +166,17 @@ function setupModeratorUI() {
             }
         });
     }
+}
+
+function updateRoundNavigation() {
+    if (previousRoundBtn) previousRoundBtn.disabled = activeRoundIndex === 0;
+}
+
+function changeRound(nextRoundIndex) {
+    if (!isModerator || nextRoundIndex < 0) return;
+
+    saveConfigModal(false);
+    socket.emit('tipit-change-round', nextRoundIndex);
 }
 
 function escapeHtml(str) {
@@ -210,6 +227,7 @@ function openConfigModal() {
     }
 
     modConfigModal.classList.remove('hidden');
+    updateRoundNavigation();
 }
 
 function closeConfigModal() {
@@ -218,7 +236,7 @@ function closeConfigModal() {
     }
 }
 
-function saveConfigModal() {
+function saveConfigModal(closeAfterSave = true) {
     const bonusHintVal = cfgBonusHint ? cfgBonusHint.value.trim() : bonusHintText;
     const hintsArr = [];
 
@@ -240,7 +258,7 @@ function saveConfigModal() {
         hints: hintsArr
     });
 
-    closeConfigModal();
+    if (closeAfterSave) closeConfigModal();
 }
 
 function toggleBonusHint() {
@@ -285,8 +303,18 @@ socket.on('tipit-state-update', (state) => {
     if (Array.isArray(state.hints)) {
         currentHints = state.hints;
     }
+    if (Array.isArray(state.rounds)) {
+        rounds = state.rounds;
+    }
+    if (Number.isInteger(state.activeRoundIndex)) {
+        activeRoundIndex = state.activeRoundIndex;
+    }
 
     updateBonusHintUI();
+    updateRoundNavigation();
+    if (isModerator && modConfigModal && !modConfigModal.classList.contains('hidden')) {
+        openConfigModal();
+    }
     renderHintList();
     renderPersonalHints();
     if (latestPlayers && latestPlayers.length > 0) {
