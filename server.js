@@ -30,6 +30,7 @@ const defaultHints = Array.from({ length: 10 }, (_, i) => ({
 
 function createTipitRound() {
   return {
+    targetTerm: "",
     bonusHintText: "Das ist ein Bonushinweis für alle!",
     hints: JSON.parse(JSON.stringify(defaultHints))
   };
@@ -49,6 +50,7 @@ function activateTipitRound(roundIndex) {
   if (!round) return;
 
   tipitState.activeRoundIndex = roundIndex;
+  tipitState.targetTerm = round.targetTerm || "";
   tipitState.bonusHintText = round.bonusHintText;
   tipitState.hints = JSON.parse(JSON.stringify(round.hints));
   tipitState.playerRevealedHints = {};
@@ -239,6 +241,9 @@ io.on('connection', (socket) => {
 
   socket.on('tipit-update-config', (configData) => {
     if (configData) {
+      if (typeof configData.targetTerm === 'string') {
+        tipitState.targetTerm = configData.targetTerm;
+      }
       if (typeof configData.bonusHintText === 'string') {
         tipitState.bonusHintText = configData.bonusHintText;
       }
@@ -251,6 +256,7 @@ io.on('connection', (socket) => {
         }));
       }
       tipitState.rounds[tipitState.activeRoundIndex] = {
+        targetTerm: tipitState.targetTerm,
         bonusHintText: tipitState.bonusHintText,
         hints: JSON.parse(JSON.stringify(tipitState.hints))
       };

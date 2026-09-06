@@ -21,6 +21,7 @@ const resetTipitBtn = document.getElementById('resetTipitBtn');
 const resetTipitCoinsBtn = document.getElementById('resetTipitCoinsBtn');
 const previousRoundBtn = document.getElementById('previousRoundBtn');
 const nextRoundBtn = document.getElementById('nextRoundBtn');
+const cfgTargetTerm = document.getElementById('cfgTargetTerm');
 const cfgBonusHint = document.getElementById('cfgBonusHint');
 const cfgHintsContainer = document.getElementById('cfgHintsContainer');
 const personalHintsPanel = document.getElementById('personalHintsPanel');
@@ -39,6 +40,7 @@ let playerRevealedHints = {}; // { [playerName]: [hintIndex, ...] }
 let globalRevealedHints = new Set(); // Set of hintIndices revealed
 let bonusHintRevealed = false;
 let bonusHintText = "Das ist ein Bonushinweis für alle!";
+let targetTerm = '';
 let activeRoundIndex = 0;
 let rounds = [];
 let currentHints = Array.from({ length: 10 }, (_, i) => ({
@@ -192,6 +194,9 @@ function escapeHtml(str) {
 function openConfigModal() {
     if (!modConfigModal) return;
 
+    if (cfgTargetTerm) {
+        cfgTargetTerm.value = targetTerm;
+    }
     if (cfgBonusHint) {
         cfgBonusHint.value = bonusHintText;
     }
@@ -237,6 +242,7 @@ function closeConfigModal() {
 }
 
 function saveConfigModal(closeAfterSave = true) {
+    const targetTermVal = cfgTargetTerm ? cfgTargetTerm.value.trim() : targetTerm;
     const bonusHintVal = cfgBonusHint ? cfgBonusHint.value.trim() : bonusHintText;
     const hintsArr = [];
 
@@ -254,6 +260,7 @@ function saveConfigModal(closeAfterSave = true) {
     }
 
     socket.emit('tipit-update-config', {
+        targetTerm: targetTermVal,
         bonusHintText: bonusHintVal,
         hints: hintsArr
     });
@@ -297,6 +304,9 @@ socket.on('tipit-state-update', (state) => {
     playerRevealedHints = state.playerRevealedHints || {};
     globalRevealedHints = new Set(state.globalRevealedHints || []);
     bonusHintRevealed = !!state.bonusHintRevealed;
+    if (state.targetTerm !== undefined) {
+        targetTerm = state.targetTerm;
+    }
     if (state.bonusHintText !== undefined) {
         bonusHintText = state.bonusHintText;
     }
