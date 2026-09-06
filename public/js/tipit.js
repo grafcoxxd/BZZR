@@ -154,9 +154,7 @@ function setupModeratorUI() {
     }
     if (toggleAnswersBtn) {
         toggleAnswersBtn.classList.remove('hidden');
-        toggleAnswersBtn.addEventListener('click', () => {
-            socket.emit('tipit-toggle-answers');
-        });
+        toggleAnswersBtn.addEventListener('click', () => socket.emit('tipit-toggle-answers'));
     }
     if (closeConfigBtn) closeConfigBtn.addEventListener('click', closeConfigModal);
     if (cancelConfigBtn) cancelConfigBtn.addEventListener('click', closeConfigModal);
@@ -337,9 +335,10 @@ function updateModeratorTargetTerm() {
     }
 }
 
-function updateAnswerRevealControl() {
-    if (!toggleAnswersBtn) return;
-    toggleAnswersBtn.textContent = answersRevealed ? 'Antworten verbergen' : 'Antworten aufdecken';
+function updateAnswerVisibility() {
+    if (toggleAnswersBtn) {
+        toggleAnswersBtn.textContent = answersRevealed ? 'Antworten verbergen' : 'Antworten aufdecken';
+    }
 }
 
 // Socket Listener für TipIt Status-Updates
@@ -367,7 +366,7 @@ socket.on('tipit-state-update', (state) => {
 
     updateBonusHintUI();
     updateModeratorTargetTerm();
-    updateAnswerRevealControl();
+    updateAnswerVisibility();
     updateRoundNavigation();
     if (isModerator && modConfigModal && !modConfigModal.classList.contains('hidden')) {
         openConfigModal();
@@ -509,7 +508,7 @@ socket.on('update-text', ({ name, text }) => {
     player.text = text;
 
     // Der eigene Eingabewert ist bereits sichtbar; ein Neurendern würde den Fokus entfernen.
-    if (isModerator || name !== playerName) {
+    if (isModerator || answersRevealed || name !== playerName) {
         updatePlayersUI(latestPlayers);
     }
 });

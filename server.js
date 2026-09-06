@@ -161,7 +161,11 @@ io.on('connection', (socket) => {
     const player = players.get(socket.id);
     if (player) {
       player.text = text;
-      io.to('moderator-room').emit('update-text', { name: player.name, text: player.text });
+      if (tipitState.answersRevealed) {
+        io.emit('update-text', { name: player.name, text: player.text });
+      } else {
+        io.to('moderator-room').emit('update-text', { name: player.name, text: player.text });
+      }
     }
   });
 
