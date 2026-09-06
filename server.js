@@ -247,6 +247,7 @@ io.on('connection', (socket) => {
 
   socket.on('tipit-toggle-answers', () => {
     tipitState.answersRevealed = !tipitState.answersRevealed;
+    io.emit('update-players', Array.from(players.values()));
     io.emit('tipit-state-update', tipitState);
   });
 
