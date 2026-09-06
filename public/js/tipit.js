@@ -282,6 +282,23 @@ function toggleBonusHint() {
 function updateBonusHintUI() {
     const bonusHintTextEl = document.getElementById('bonus-hint-text');
     const bonusCard = document.getElementById('bonus-hint-card');
+    const bonusHintLabel = document.getElementById('bonus-hint-label');
+
+    if (bonusCard) {
+        bonusCard.classList.toggle('bg-gray-700/60', !bonusHintRevealed);
+        bonusCard.classList.toggle('border-gray-600/60', !bonusHintRevealed);
+        bonusCard.classList.toggle('bg-gradient-to-r', bonusHintRevealed);
+        bonusCard.classList.toggle('from-amber-500/20', bonusHintRevealed);
+        bonusCard.classList.toggle('via-yellow-500/10', bonusHintRevealed);
+        bonusCard.classList.toggle('to-amber-500/20', bonusHintRevealed);
+        bonusCard.classList.toggle('border-2', bonusHintRevealed);
+        bonusCard.classList.toggle('border-yellow-500/60', bonusHintRevealed);
+    }
+
+    if (bonusHintLabel) {
+        bonusHintLabel.classList.toggle('text-gray-300', !bonusHintRevealed);
+        bonusHintLabel.classList.toggle('text-yellow-400', bonusHintRevealed);
+    }
 
     if (bonusHintTextEl) {
         if (bonusHintRevealed) {
