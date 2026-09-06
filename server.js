@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -36,14 +37,47 @@ function createTipitRound() {
   };
 }
 
+const tipitDataDir = path.join(__dirname, 'data');
+const tipitRoundsFile = path.join(tipitDataDir, 'tipit-rounds.json');
+
+function loadTipitRounds() {
+  try {
+    const savedData = JSON.parse(fs.readFileSync(tipitRoundsFile, 'utf8'));
+    if (!Array.isArray(savedData.rounds) || savedData.rounds.length === 0) {
+      return { rounds: [createTipitRound()], activeRoundIndex: 0 };
+    }
+
+    const activeRoundIndex = Math.min(
+      Math.max(parseInt(savedData.activeRoundIndex) || 0, 0),
+      savedData.rounds.length - 1
+    );
+    return { rounds: savedData.rounds, activeRoundIndex };
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error('TipIt-Sets konnten nicht geladen werden:', error.message);
+    }
+    return { rounds: [createTipitRound()], activeRoundIndex: 0 };
+  }
+}
+
+function saveTipitRounds() {
+  fs.mkdirSync(tipitDataDir, { recursive: true });
+  fs.writeFileSync(tipitRoundsFile, JSON.stringify({
+    rounds: tipitState.rounds,
+    activeRoundIndex: tipitState.activeRoundIndex
+  }, null, 2));
+}
+
+const savedTipitData = loadTipitRounds();
+
 let tipitState = {
   playerRevealedHints: {},
   globalRevealedHints: [],
   bonusHintRevealed: false,
   answersRevealed: false,
-  rounds: [createTipitRound()],
-  activeRoundIndex: 0,
-  ...createTipitRound()
+  rounds: savedTipitData.rounds,
+  activeRoundIndex: savedTipitData.activeRoundIndex,
+  ...savedTipitData.rounds[savedTipitData.activeRoundIndex]
 };
 
 function activateTipitRound(roundIndex) {
@@ -272,6 +306,7 @@ io.on('connection', (socket) => {
         bonusHintText: tipitState.bonusHintText,
         hints: JSON.parse(JSON.stringify(tipitState.hints))
       };
+      saveTipitRounds();
     }
     io.emit('tipit-state-update', tipitState);
   });
@@ -285,6 +320,7 @@ io.on('connection', (socket) => {
       tipitState.rounds.push(createTipitRound());
     }
     activateTipitRound(nextRoundIndex);
+    saveTipitRounds();
     io.emit('tipit-state-update', tipitState);
   });
 
@@ -304,11 +340,13 @@ io.on('connection', (socket) => {
         cost: parseInt(hint.cost) >= 0 ? parseInt(hint.cost) : 1
       })) : JSON.parse(JSON.stringify(defaultHints))
     };
+    saveTipitRounds();
     io.emit('tipit-state-update', tipitState);
   });
 
   socket.on('tipit-create-round', () => {
     tipitState.rounds.push(createTipitRound());
+    saveTipitRounds();
     io.emit('tipit-state-update', tipitState);
   });
 
@@ -337,6 +375,7 @@ io.on('connection', (socket) => {
     }
 
     activateTipitRound(nextRoundIndex);
+  saveTipitRounds();
     io.emit('tipit-state-update', tipitState);
   });
 
