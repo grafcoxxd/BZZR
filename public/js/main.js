@@ -11,13 +11,14 @@ const registerPlayerBtn = document.getElementById('registerPlayerBtn');
 const playerNameInput = document.getElementById('playerNameInput');
 const nameEntryDiv = document.getElementById('nameEntry');
 const buzzerSectionDiv = document.getElementById('buzzer-section');
-const playersContainer = document.getElementById('playersContainer');
+const questionDisplay = document.getElementById('questionDisplay');
 const tipitLink = document.getElementById('tipitLink');
 const gameVolumeSlider = document.getElementById('gameVolume');
 const liveVolumeSlider = document.getElementById('liveVolume');
 
 const audio = new Audio();
 let playerName = null;
+const PLAYER_SLOT_IDS = ['slot-0', 'slot-1', 'slot-2', 'slot-3', 'slot-4', 'slot-5'];
 
 const tipitHintColors = [
     '#28627a', '#35714a', '#85652c', '#8b4652', '#604181',
@@ -135,10 +136,13 @@ socket.on('buzzer-unlocked', () => {
 
 // --- Spieler & Punkte Updates ---
 socket.on('update-players', (updatedPlayers) => {
-    playersContainer.innerHTML = '';
-    updatedPlayers.forEach((player) => {
+    PLAYER_SLOT_IDS.forEach((slotId) => {
+        document.getElementById(slotId).innerHTML = '';
+    });
+
+    updatedPlayers.slice(0, 6).forEach((player, index) => {
         const card = createPlayerCard(player.name, player.score, player.color);
-        playersContainer.appendChild(card);
+        document.getElementById(PLAYER_SLOT_IDS[index]).appendChild(card);
         if (player.name === playerName) {
             localStorage.setItem('playerScore', player.score);
         }
@@ -147,7 +151,7 @@ socket.on('update-players', (updatedPlayers) => {
 
 function createPlayerCard(name, score, color) {
     const card = document.createElement('div');
-    card.className = 'player-card p-6 flex flex-col items-center text-center';
+    card.className = 'player-card w-full max-w-[220px] p-4 flex flex-col items-center text-center';
     
     const nameEl = document.createElement('h2');
     nameEl.className = 'text-2xl font-bold mb-2';
@@ -163,6 +167,10 @@ function createPlayerCard(name, score, color) {
     card.appendChild(nameEl);
     return card;
 }
+
+socket.on('buzzer-question-update', (question) => {
+    questionDisplay.textContent = question || '';
+});
 
 // Globaler Reset vom Moderator
 socket.on('scores-reset-globally', () => {

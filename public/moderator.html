@@ -32,6 +32,10 @@
     </button>
 </div>
 
+<div class="w-full max-w-2xl px-4 mb-2">
+    <input id="buzzerQuestionInput" type="text" placeholder="Frage für die Spieler..." class="w-full bg-transparent border-b-2 border-gray-600 px-3 py-2 text-center text-xl font-bold text-white outline-none transition focus:border-teal-400">
+</div>
+
 <div class="flex flex-col items-center w-full my-8">
     <div id="uploadContainer" class="w-full max-w-md">
         <label id="dropZone" class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800/50 hover:bg-gray-800 hover:border-teal-500 transition-all duration-300">
@@ -102,6 +106,7 @@
         const buzzerSound = document.getElementById('buzzerSound');
         const correctSound = document.getElementById('correctSound');
         const wrongSound = document.getElementById('wrongSound');
+        const buzzerQuestionInput = document.getElementById('buzzerQuestionInput');
         
         // Bild-Elemente
         const imageUpload = document.getElementById('imageUpload');
@@ -116,6 +121,14 @@
         buzzerSound.volume = 0.17;
         correctSound.volume = 0.1;
         wrongSound.volume = 0.1;
+
+        buzzerQuestionInput.addEventListener('input', () => {
+            socket.emit('buzzer-question-update', buzzerQuestionInput.value);
+        });
+
+        socket.on('buzzer-question-update', (question) => {
+            buzzerQuestionInput.value = question || '';
+        });
 
         let selectedPoints = localStorage.getItem('selectedPoints') ? parseInt(localStorage.getItem('selectedPoints')) : 0;
 

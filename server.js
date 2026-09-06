@@ -20,6 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let buzzerLocked = false;
 let buzzerWinnerName = null;
+let buzzerQuestion = '';
 const players = new Map();
 
 const defaultHints = Array.from({ length: 10 }, (_, i) => ({
@@ -105,6 +106,7 @@ io.on('connection', (socket) => {
   if (buzzerLocked) {
     socket.emit('buzzer-locked', buzzerWinnerName);
   }
+  socket.emit('buzzer-question-update', buzzerQuestion);
 
   socket.on('register-moderator', () => {
     socket.join('moderator-room');
@@ -175,6 +177,11 @@ io.on('connection', (socket) => {
     buzzerLocked = false;
     buzzerWinnerName = null;
     io.emit('buzzer-unlocked');
+  });
+
+  socket.on('buzzer-question-update', (question) => {
+    buzzerQuestion = typeof question === 'string' ? question : '';
+    io.emit('buzzer-question-update', buzzerQuestion);
   });
 
   socket.on('add-point-to-player', (playerName) => {
