@@ -139,7 +139,7 @@ function setupModeratorUI() {
         if (bonusControlArea) {
             bonusControlArea.innerHTML = `
                 <button id="revealBonusBtn" class="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold text-xs py-1 px-2.5 rounded-lg transition shadow flex items-center gap-1">
-                    Aufdecken
+                    👁️ Für alle aufdecken
                 </button>
             `;
             document.getElementById('revealBonusBtn').addEventListener('click', toggleBonusHint);
@@ -302,23 +302,20 @@ function updateBonusHintUI() {
 
     if (bonusHintTextEl) {
         if (bonusHintRevealed) {
-            bonusHintTextEl.textContent = bonusHintText;
+            bonusHintTextEl.textContent = `Bonushinweis: ${bonusHintText}`;
             bonusHintTextEl.classList.remove('italic', 'text-gray-300');
             bonusHintTextEl.classList.add('text-yellow-200', 'font-bold');
-            const hintLength = bonusHintText.length;
-            bonusHintTextEl.style.fontSize = hintLength > 160 ? '0.625rem' : hintLength > 100 ? '0.75rem' : hintLength > 55 ? '0.875rem' : '1rem';
         } else {
             bonusHintTextEl.textContent = "Verdeckt";
             bonusHintTextEl.classList.add('italic', 'text-gray-300');
             bonusHintTextEl.classList.remove('text-yellow-200', 'font-bold');
-            bonusHintTextEl.style.fontSize = '';
         }
     }
 
     if (isModerator && bonusCard) {
         const btn = bonusCard.querySelector('#revealBonusBtn');
         if (btn) {
-            btn.textContent = bonusHintRevealed ? 'Verbergen' : 'Aufdecken';
+            btn.textContent = bonusHintRevealed ? '🙈 Verbergen' : '👁️ Für alle aufdecken';
         }
     }
 }
