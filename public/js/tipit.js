@@ -21,6 +21,7 @@ const resetTipitBtn = document.getElementById('resetTipitBtn');
 const resetTipitCoinsBtn = document.getElementById('resetTipitCoinsBtn');
 const previousRoundBtn = document.getElementById('previousRoundBtn');
 const nextRoundBtn = document.getElementById('nextRoundBtn');
+const roundPageIndicator = document.getElementById('roundPageIndicator');
 const cfgTargetTerm = document.getElementById('cfgTargetTerm');
 const cfgBonusHint = document.getElementById('cfgBonusHint');
 const cfgHintsContainer = document.getElementById('cfgHintsContainer');
@@ -172,6 +173,9 @@ function setupModeratorUI() {
 
 function updateRoundNavigation() {
     if (previousRoundBtn) previousRoundBtn.disabled = activeRoundIndex === 0;
+    if (roundPageIndicator) {
+        roundPageIndicator.textContent = `Seite ${activeRoundIndex + 1} von ${Math.max(rounds.length, 1)}`;
+    }
 }
 
 function changeRound(nextRoundIndex) {
