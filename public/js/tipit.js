@@ -338,6 +338,9 @@ function updateModeratorTargetTerm() {
 function updateAnswerVisibility() {
     if (toggleAnswersBtn) {
         toggleAnswersBtn.textContent = answersRevealed ? 'Antworten verbergen' : 'Antworten aufdecken';
+        toggleAnswersBtn.classList.toggle('ring-2', answersRevealed);
+        toggleAnswersBtn.classList.toggle('ring-amber-300', answersRevealed);
+        toggleAnswersBtn.classList.toggle('shadow-[0_0_14px_rgba(252,211,77,0.8)]', answersRevealed);
     }
 }
 
@@ -606,20 +609,38 @@ function createPlayerCard(player) {
 
     const isOwnPlayer = playerName && player.name === playerName;
     if (isOwnPlayer) {
+        const answerWrapper = document.createElement('div');
+        answerWrapper.className = 'relative w-full mt-2';
         const answerInput = document.createElement('input');
         answerInput.type = 'text';
         answerInput.placeholder = 'Deine Antwort...';
         answerInput.value = player.text || '';
-        answerInput.className = 'w-full mt-2 p-2 rounded-lg bg-gray-700 border border-gray-600 text-white text-xs text-center focus:outline-none focus:ring-2 focus:ring-teal-400';
+        answerInput.className = 'w-full p-2 pr-8 rounded-lg bg-gray-700 border border-gray-600 text-white text-xs text-center focus:outline-none focus:ring-2 focus:ring-teal-400';
         answerInput.addEventListener('input', () => {
             socket.emit('player-typing', answerInput.value);
         });
-        card.appendChild(answerInput);
+        answerWrapper.appendChild(answerInput);
+        if (answersRevealed) {
+            const eyeIndicator = document.createElement('span');
+            eyeIndicator.className = 'pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm';
+            eyeIndicator.textContent = '👁';
+            answerWrapper.appendChild(eyeIndicator);
+        }
+        card.appendChild(answerWrapper);
     } else if (isModerator || answersRevealed) {
+        const answerWrapper = document.createElement('div');
+        answerWrapper.className = 'relative w-full mt-2';
         const answerDisplay = document.createElement('div');
-        answerDisplay.className = 'w-full min-h-9 mt-2 p-2 rounded-lg bg-gray-900/70 border border-gray-700 text-xs text-gray-200 text-center break-words';
+        answerDisplay.className = 'w-full min-h-9 p-2 pr-8 rounded-lg bg-gray-900/70 border border-gray-700 text-xs text-gray-200 text-center break-words';
         answerDisplay.textContent = player.text || '';
-        card.appendChild(answerDisplay);
+        answerWrapper.appendChild(answerDisplay);
+        if (answersRevealed) {
+            const eyeIndicator = document.createElement('span');
+            eyeIndicator.className = 'pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm';
+            eyeIndicator.textContent = '👁';
+            answerWrapper.appendChild(eyeIndicator);
+        }
+        card.appendChild(answerWrapper);
     } else {
         const hiddenAnswer = document.createElement('div');
         hiddenAnswer.className = 'w-full h-9 mt-2 rounded-lg bg-gray-900/50 border border-gray-800';
