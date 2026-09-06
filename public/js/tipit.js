@@ -305,12 +305,14 @@ function updateBonusHintUI() {
             bonusHintTextEl.textContent = bonusHintText;
             bonusHintTextEl.classList.remove('italic', 'text-gray-300');
             bonusHintTextEl.classList.add('text-yellow-200', 'font-bold');
+            const hintLength = bonusHintText.length;
+            bonusHintTextEl.style.fontSize = hintLength > 160 ? '0.625rem' : hintLength > 100 ? '0.75rem' : hintLength > 55 ? '0.875rem' : '1rem';
         } else {
             bonusHintTextEl.textContent = "Verdeckt";
             bonusHintTextEl.classList.add('italic', 'text-gray-300');
             bonusHintTextEl.classList.remove('text-yellow-200', 'font-bold');
+            bonusHintTextEl.style.fontSize = '';
         }
-        fitBonusHintText(bonusHintTextEl);
     }
 
     if (isModerator && bonusCard) {
@@ -318,17 +320,6 @@ function updateBonusHintUI() {
         if (btn) {
             btn.textContent = bonusHintRevealed ? 'Verbergen' : 'Aufdecken';
         }
-    }
-}
-
-function fitBonusHintText(hintTextElement) {
-    let fontSize = 16;
-    hintTextElement.style.fontSize = `${fontSize}px`;
-    hintTextElement.style.lineHeight = '1.25';
-
-    while (hintTextElement.scrollHeight > hintTextElement.clientHeight && fontSize > 10) {
-        fontSize -= 1;
-        hintTextElement.style.fontSize = `${fontSize}px`;
     }
 }
 
