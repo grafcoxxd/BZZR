@@ -40,6 +40,7 @@ let tipitState = {
   playerRevealedHints: {},
   globalRevealedHints: [],
   bonusHintRevealed: false,
+  answersRevealed: false,
   rounds: [createTipitRound()],
   activeRoundIndex: 0,
   ...createTipitRound()
@@ -56,6 +57,7 @@ function activateTipitRound(roundIndex) {
   tipitState.playerRevealedHints = {};
   tipitState.globalRevealedHints = [];
   tipitState.bonusHintRevealed = false;
+  tipitState.answersRevealed = false;
 }
 
 io.on('connection', (socket) => {
@@ -239,6 +241,11 @@ io.on('connection', (socket) => {
     io.emit('tipit-state-update', tipitState);
   });
 
+  socket.on('tipit-toggle-answers', () => {
+    tipitState.answersRevealed = !tipitState.answersRevealed;
+    io.emit('tipit-state-update', tipitState);
+  });
+
   socket.on('tipit-update-config', (configData) => {
     if (configData) {
       if (typeof configData.targetTerm === 'string') {
@@ -282,6 +289,7 @@ io.on('connection', (socket) => {
       playerRevealedHints: {},
       globalRevealedHints: [],
       bonusHintRevealed: false,
+      answersRevealed: false,
       rounds,
       activeRoundIndex: tipitState.activeRoundIndex,
       ...rounds[tipitState.activeRoundIndex]

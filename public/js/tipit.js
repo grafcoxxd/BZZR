@@ -14,6 +14,7 @@ const tipitStatus = document.getElementById('tipitStatus');
 const modBadge = document.getElementById('modBadge');
 const moderatorTargetTerm = document.getElementById('moderatorTargetTerm');
 const openConfigBtn = document.getElementById('openConfigBtn');
+const toggleAnswersBtn = document.getElementById('toggleAnswersBtn');
 const modConfigModal = document.getElementById('modConfigModal');
 const closeConfigBtn = document.getElementById('closeConfigBtn');
 const cancelConfigBtn = document.getElementById('cancelConfigBtn');
@@ -41,6 +42,7 @@ let latestPlayers = [];
 let playerRevealedHints = {}; // { [playerName]: [hintIndex, ...] }
 let globalRevealedHints = new Set(); // Set of hintIndices revealed
 let bonusHintRevealed = false;
+let answersRevealed = false;
 let bonusHintText = "Das ist ein Bonushinweis für alle!";
 let targetTerm = '';
 let activeRoundIndex = 0;
@@ -149,6 +151,12 @@ function setupModeratorUI() {
     if (openConfigBtn) {
         openConfigBtn.classList.remove('hidden');
         openConfigBtn.addEventListener('click', openConfigModal);
+    }
+    if (toggleAnswersBtn) {
+        toggleAnswersBtn.classList.remove('hidden');
+        toggleAnswersBtn.addEventListener('click', () => {
+            socket.emit('tipit-toggle-answers');
+        });
     }
     if (closeConfigBtn) closeConfigBtn.addEventListener('click', closeConfigModal);
     if (cancelConfigBtn) cancelConfigBtn.addEventListener('click', closeConfigModal);
@@ -329,12 +337,18 @@ function updateModeratorTargetTerm() {
     }
 }
 
+function updateAnswerRevealControl() {
+    if (!toggleAnswersBtn) return;
+    toggleAnswersBtn.textContent = answersRevealed ? 'Antworten verbergen' : 'Antworten aufdecken';
+}
+
 // Socket Listener für TipIt Status-Updates
 socket.on('tipit-state-update', (state) => {
     if (!state) return;
     playerRevealedHints = state.playerRevealedHints || {};
     globalRevealedHints = new Set(state.globalRevealedHints || []);
     bonusHintRevealed = !!state.bonusHintRevealed;
+    answersRevealed = !!state.answersRevealed;
     if (state.targetTerm !== undefined) {
         targetTerm = state.targetTerm;
     }
@@ -353,6 +367,7 @@ socket.on('tipit-state-update', (state) => {
 
     updateBonusHintUI();
     updateModeratorTargetTerm();
+    updateAnswerRevealControl();
     updateRoundNavigation();
     if (isModerator && modConfigModal && !modConfigModal.classList.contains('hidden')) {
         openConfigModal();
@@ -601,7 +616,7 @@ function createPlayerCard(player) {
             socket.emit('player-typing', answerInput.value);
         });
         card.appendChild(answerInput);
-    } else if (isModerator) {
+    } else if (isModerator || answersRevealed) {
         const answerDisplay = document.createElement('div');
         answerDisplay.className = 'w-full min-h-9 mt-2 p-2 rounded-lg bg-gray-900/70 border border-gray-700 text-xs text-gray-200 text-center break-words';
         answerDisplay.textContent = player.text || '';
