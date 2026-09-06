@@ -32,8 +32,11 @@
     </button>
 </div>
 
-<div class="w-full max-w-2xl px-4 mb-2">
-    <input id="buzzerQuestionInput" type="text" placeholder="Frage für die Spieler..." class="w-full bg-transparent border-b-2 border-gray-600 px-3 py-2 text-center text-xl font-bold text-white outline-none transition focus:border-teal-400">
+<div class="w-full max-w-2xl px-4 mb-2 flex items-center gap-3">
+    <input id="buzzerQuestionInput" type="text" placeholder="Frage für die Spieler..." class="min-w-0 flex-grow bg-transparent border-b-2 border-gray-600 px-3 py-2 text-center text-xl font-bold text-white outline-none transition focus:border-teal-400">
+    <button id="showBuzzerQuestionBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+        Anzeigen
+    </button>
 </div>
 
 <div class="flex flex-col items-center w-full my-8">
@@ -107,6 +110,7 @@
         const correctSound = document.getElementById('correctSound');
         const wrongSound = document.getElementById('wrongSound');
         const buzzerQuestionInput = document.getElementById('buzzerQuestionInput');
+        const showBuzzerQuestionBtn = document.getElementById('showBuzzerQuestionBtn');
         
         // Bild-Elemente
         const imageUpload = document.getElementById('imageUpload');
@@ -122,7 +126,7 @@
         correctSound.volume = 0.1;
         wrongSound.volume = 0.1;
 
-        buzzerQuestionInput.addEventListener('input', () => {
+        showBuzzerQuestionBtn.addEventListener('click', () => {
             socket.emit('buzzer-question-update', buzzerQuestionInput.value);
         });
 
