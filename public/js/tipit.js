@@ -12,6 +12,7 @@ const registerPlayerBtn = document.getElementById('registerPlayerBtn');
 const hintsListContainer = document.getElementById('hints-list');
 const tipitStatus = document.getElementById('tipitStatus');
 const modBadge = document.getElementById('modBadge');
+const moderatorTargetTerm = document.getElementById('moderatorTargetTerm');
 const openConfigBtn = document.getElementById('openConfigBtn');
 const modConfigModal = document.getElementById('modConfigModal');
 const closeConfigBtn = document.getElementById('closeConfigBtn');
@@ -302,6 +303,15 @@ function updateBonusHintUI() {
     }
 }
 
+function updateModeratorTargetTerm() {
+    if (!moderatorTargetTerm) return;
+
+    moderatorTargetTerm.classList.toggle('hidden', !isModerator);
+    if (isModerator) {
+        moderatorTargetTerm.textContent = targetTerm || 'Kein Begriff festgelegt';
+    }
+}
+
 // Socket Listener für TipIt Status-Updates
 socket.on('tipit-state-update', (state) => {
     if (!state) return;
@@ -325,6 +335,7 @@ socket.on('tipit-state-update', (state) => {
     }
 
     updateBonusHintUI();
+    updateModeratorTargetTerm();
     updateRoundNavigation();
     if (isModerator && modConfigModal && !modConfigModal.classList.contains('hidden')) {
         openConfigModal();
