@@ -288,6 +288,34 @@ io.on('connection', (socket) => {
     io.emit('tipit-state-update', tipitState);
   });
 
+  socket.on('tipit-save-and-activate-round', ({ roundIndex, configData }) => {
+    const nextRoundIndex = parseInt(roundIndex);
+    if (Number.isNaN(nextRoundIndex) || nextRoundIndex < 0 || nextRoundIndex > tipitState.rounds.length) {
+      return;
+    }
+
+    if (nextRoundIndex === tipitState.rounds.length) {
+      tipitState.rounds.push(createTipitRound());
+    }
+
+    const round = tipitState.rounds[nextRoundIndex];
+    if (configData) {
+      round.targetTerm = typeof configData.targetTerm === 'string' ? configData.targetTerm : round.targetTerm;
+      round.bonusHintText = typeof configData.bonusHintText === 'string' ? configData.bonusHintText : round.bonusHintText;
+      if (Array.isArray(configData.hints)) {
+        round.hints = configData.hints.map((hint, index) => ({
+          id: index + 1,
+          title: hint.title || `Hinweis ${index + 1}`,
+          text: hint.text || '',
+          cost: parseInt(hint.cost) >= 0 ? parseInt(hint.cost) : 1
+        }));
+      }
+    }
+
+    activateTipitRound(nextRoundIndex);
+    io.emit('tipit-state-update', tipitState);
+  });
+
   socket.on('tipit-reset', () => {
     const rounds = tipitState.rounds;
     tipitState = {

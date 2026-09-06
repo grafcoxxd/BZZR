@@ -46,6 +46,7 @@ let answersRevealed = false;
 let bonusHintText = "Das ist ein Bonushinweis für alle!";
 let targetTerm = '';
 let activeRoundIndex = 0;
+let editingRoundIndex = 0;
 let rounds = [];
 let currentHints = Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
@@ -179,17 +180,32 @@ function setupModeratorUI() {
 }
 
 function updateRoundNavigation() {
-    if (previousRoundBtn) previousRoundBtn.disabled = activeRoundIndex === 0;
+    if (previousRoundBtn) previousRoundBtn.disabled = editingRoundIndex === 0;
     if (roundPageIndicator) {
-        roundPageIndicator.textContent = `Seite ${activeRoundIndex + 1} von ${Math.max(rounds.length, 1)}`;
+        roundPageIndicator.textContent = `Seite ${editingRoundIndex + 1} von ${Math.max(rounds.length, 1)}`;
     }
 }
 
 function changeRound(nextRoundIndex) {
     if (!isModerator || nextRoundIndex < 0) return;
 
-    saveConfigModal(false);
-    socket.emit('tipit-change-round', nextRoundIndex);
+    saveEditorRoundDraft();
+    if (nextRoundIndex === rounds.length) {
+        rounds.push({
+            targetTerm: '',
+            bonusHintText: 'Das ist ein Bonushinweis für alle!',
+            hints: Array.from({ length: 10 }, (_, i) => ({
+                id: i + 1,
+                title: `Hinweis ${i + 1}`,
+                text: `Tipp ${i + 1}`,
+                cost: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5][i]
+            }))
+        });
+    }
+    if (nextRoundIndex >= rounds.length) return;
+
+    editingRoundIndex = nextRoundIndex;
+    openConfigModal();
 }
 
 function escapeHtml(str) {
@@ -205,17 +221,27 @@ function escapeHtml(str) {
 function openConfigModal() {
     if (!modConfigModal) return;
 
+    if (modConfigModal.classList.contains('hidden')) {
+        editingRoundIndex = activeRoundIndex;
+    }
+
+    const editingRound = rounds[editingRoundIndex] || {
+        targetTerm,
+        bonusHintText,
+        hints: currentHints
+    };
+
     if (cfgTargetTerm) {
-        cfgTargetTerm.value = targetTerm;
+        cfgTargetTerm.value = editingRound.targetTerm || '';
     }
     if (cfgBonusHint) {
-        cfgBonusHint.value = bonusHintText;
+        cfgBonusHint.value = editingRound.bonusHintText || '';
     }
 
     if (cfgHintsContainer) {
         cfgHintsContainer.innerHTML = '';
         for (let i = 1; i <= 10; i++) {
-            const hintObj = currentHints.find(h => h.id === i) || {
+            const hintObj = editingRound.hints.find(h => h.id === i) || {
                 id: i,
                 title: `Hinweis ${i}`,
                 text: `Tipp ${i}`,
@@ -252,9 +278,9 @@ function closeConfigModal() {
     }
 }
 
-function saveConfigModal(closeAfterSave = true) {
-    const targetTermVal = cfgTargetTerm ? cfgTargetTerm.value.trim() : targetTerm;
-    const bonusHintVal = cfgBonusHint ? cfgBonusHint.value.trim() : bonusHintText;
+function getEditorConfig() {
+    const targetTermVal = cfgTargetTerm ? cfgTargetTerm.value.trim() : '';
+    const bonusHintVal = cfgBonusHint ? cfgBonusHint.value.trim() : '';
     const hintsArr = [];
 
     for (let i = 1; i <= 10; i++) {
@@ -270,13 +296,29 @@ function saveConfigModal(closeAfterSave = true) {
         });
     }
 
-    socket.emit('tipit-update-config', {
+    return {
         targetTerm: targetTermVal,
         bonusHintText: bonusHintVal,
         hints: hintsArr
+    };
+}
+
+function saveEditorRoundDraft() {
+    if (!modConfigModal || modConfigModal.classList.contains('hidden')) return;
+
+    rounds[editingRoundIndex] = getEditorConfig();
+}
+
+function saveConfigModal() {
+    const configData = getEditorConfig();
+    rounds[editingRoundIndex] = configData;
+
+    socket.emit('tipit-save-and-activate-round', {
+        roundIndex: editingRoundIndex,
+        configData
     });
 
-    if (closeAfterSave) closeConfigModal();
+    closeConfigModal();
 }
 
 function toggleBonusHint() {
@@ -365,6 +407,10 @@ socket.on('tipit-state-update', (state) => {
     }
     if (Number.isInteger(state.activeRoundIndex)) {
         activeRoundIndex = state.activeRoundIndex;
+    }
+
+    if (isModerator && modConfigModal && !modConfigModal.classList.contains('hidden')) {
+        editingRoundIndex = activeRoundIndex;
     }
 
     updateBonusHintUI();
