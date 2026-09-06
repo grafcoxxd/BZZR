@@ -66,9 +66,11 @@ function saveTipitRounds() {
     rounds: tipitState.rounds,
     activeRoundIndex: tipitState.activeRoundIndex
   }, null, 2));
+  console.log(`TipIt-Sets gespeichert: ${tipitRoundsFile}`);
 }
 
 const savedTipitData = loadTipitRounds();
+console.log(`TipIt-Sets werden gespeichert in: ${tipitRoundsFile}`);
 
 let tipitState = {
   playerRevealedHints: {},
