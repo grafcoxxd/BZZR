@@ -29,8 +29,6 @@ const cfgBonusHint = document.getElementById('cfgBonusHint');
 const cfgHintsContainer = document.getElementById('cfgHintsContainer');
 const personalHintsPanel = document.getElementById('personalHintsPanel');
 const personalHintsList = document.getElementById('personalHintsList');
-const addHintSlotBtn = document.getElementById('addHintSlotBtn');
-const personalHintsTitle = document.getElementById('personalHintsTitle');
 
 const gameVolumeSlider = document.getElementById('gameVolume');
 const liveVolumeSlider = document.getElementById('liveVolume');
@@ -47,7 +45,6 @@ let bonusHintRevealed = false;
 let answersRevealed = false;
 let bonusHintText = "Das ist ein Bonushinweis für alle!";
 let targetTerm = '';
-let hintSlotCount = 2;
 let activeRoundIndex = 0;
 let editingRoundIndex = 0;
 let rounds = [];
@@ -180,10 +177,6 @@ function setupModeratorUI() {
             }
         });
     }
-    if (addHintSlotBtn) {
-        addHintSlotBtn.classList.remove('hidden');
-        addHintSlotBtn.addEventListener('click', () => socket.emit('tipit-add-hint-slot'));
-    }
 }
 
 function updateRoundNavigation() {
@@ -307,7 +300,6 @@ function getEditorConfig() {
     return {
         targetTerm: targetTermVal,
         bonusHintText: bonusHintVal,
-        hintSlotCount,
         hints: hintsArr
     };
 }
@@ -413,7 +405,6 @@ socket.on('tipit-state-update', (state) => {
     if (state.bonusHintText !== undefined) {
         bonusHintText = state.bonusHintText;
     }
-    hintSlotCount = Math.max(parseInt(state.hintSlotCount) || 2, 2);
     if (Array.isArray(state.hints)) {
         currentHints = state.hints;
     }
@@ -436,20 +427,15 @@ socket.on('tipit-state-update', (state) => {
 });
 
 function renderPersonalHints() {
-    if (!playerName && !isModerator || !personalHintsPanel || !personalHintsList) return;
+    if (isModerator || !playerName || !personalHintsPanel || !personalHintsList) return;
 
-    const hints = playerName ? playerRevealedHints[playerName] || [] : [];
+    const hints = playerRevealedHints[playerName] || [];
     personalHintsList.innerHTML = '';
-    personalHintsPanel.classList.toggle('hidden', !isModerator && hints.length === 0);
-    if (personalHintsTitle) {
-        personalHintsTitle.textContent = isModerator ? `Hinweis-Slots: ${hintSlotCount}` : 'Deine gekauften Hinweise';
-    }
+    personalHintsPanel.classList.toggle('hidden', hints.length === 0);
 
-    for (let slotIndex = 0; slotIndex < hintSlotCount; slotIndex++) {
-        const hintNum = hints[slotIndex];
-        if (!hintNum) continue;
+    hints.forEach(hintNum => {
         const hintObj = currentHints.find(hint => hint.id === hintNum);
-        if (!hintObj) continue;
+        if (!hintObj) return;
 
         const hintCard = document.createElement('div');
         hintCard.className = 'min-w-0 rounded-lg border border-teal-500/50 bg-teal-950/80 px-2.5 py-2 text-left text-xs shadow-sm';
@@ -461,7 +447,7 @@ function renderPersonalHints() {
             <div class="font-medium leading-snug text-gray-200">${escapeHtml(hintObj.text)}</div>
         `;
         personalHintsList.appendChild(hintCard);
-    }
+    });
 }
 
 // Rendert die 10 Hinweiszeilen in der zentralen Liste
@@ -712,7 +698,7 @@ function createPlayerCard(player) {
     const hintsContainer = document.createElement('div');
     hintsContainer.className = 'w-full mt-2 pt-2 border-t border-gray-700/60 flex flex-col gap-1.5 text-left';
 
-    for (let slotIndex = 0; slotIndex < hintSlotCount; slotIndex++) {
+    for (let slotIndex = 0; slotIndex < 2; slotIndex++) {
         const hintNum = hints[slotIndex];
         const hintBadge = document.createElement('div');
         hintBadge.className = 'h-8 bg-teal-950/80 border border-teal-500/50 text-teal-200 text-xs px-2 py-1.5 rounded-lg shadow-sm flex items-center';

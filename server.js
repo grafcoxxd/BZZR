@@ -34,7 +34,6 @@ function createTipitRound() {
   return {
     targetTerm: "",
     bonusHintText: "Das ist ein Bonushinweis für alle!",
-    hintSlotCount: 2,
     hints: JSON.parse(JSON.stringify(defaultHints))
   };
 }
@@ -81,8 +80,7 @@ let tipitState = {
   answersRevealed: false,
   rounds: savedTipitData.rounds,
   activeRoundIndex: savedTipitData.activeRoundIndex,
-  ...savedTipitData.rounds[savedTipitData.activeRoundIndex],
-  hintSlotCount: Math.max(parseInt(savedTipitData.rounds[savedTipitData.activeRoundIndex].hintSlotCount) || 2, 2)
+  ...savedTipitData.rounds[savedTipitData.activeRoundIndex]
 };
 
 function activateTipitRound(roundIndex) {
@@ -92,7 +90,6 @@ function activateTipitRound(roundIndex) {
   tipitState.activeRoundIndex = roundIndex;
   tipitState.targetTerm = round.targetTerm || "";
   tipitState.bonusHintText = round.bonusHintText;
-  tipitState.hintSlotCount = Math.max(parseInt(round.hintSlotCount) || 2, 2);
   tipitState.hints = JSON.parse(JSON.stringify(round.hints));
   tipitState.playerRevealedHints = {};
   tipitState.globalRevealedHints = [];
@@ -260,7 +257,7 @@ io.on('connection', (socket) => {
     }
 
     const playerHints = tipitState.playerRevealedHints[playerName];
-    if (playerHints.length >= tipitState.hintSlotCount || playerHints.includes(hintIndex)) {
+    if (playerHints.length >= 2 || playerHints.includes(hintIndex)) {
       return;
     }
 
@@ -316,7 +313,6 @@ io.on('connection', (socket) => {
       tipitState.rounds[tipitState.activeRoundIndex] = {
         targetTerm: tipitState.targetTerm,
         bonusHintText: tipitState.bonusHintText,
-        hintSlotCount: tipitState.hintSlotCount,
         hints: JSON.parse(JSON.stringify(tipitState.hints))
       };
       saveTipitRounds();
@@ -346,7 +342,6 @@ io.on('connection', (socket) => {
     tipitState.rounds[draftRoundIndex] = {
       targetTerm: typeof configData.targetTerm === 'string' ? configData.targetTerm : '',
       bonusHintText: typeof configData.bonusHintText === 'string' ? configData.bonusHintText : '',
-      hintSlotCount: Math.max(parseInt(configData.hintSlotCount) || 2, 2),
       hints: Array.isArray(configData.hints) ? configData.hints.map((hint, index) => ({
         id: index + 1,
         title: hint.title || `Hinweis ${index + 1}`,
@@ -360,13 +355,6 @@ io.on('connection', (socket) => {
 
   socket.on('tipit-create-round', () => {
     tipitState.rounds.push(createTipitRound());
-    saveTipitRounds();
-    io.emit('tipit-state-update', tipitState);
-  });
-
-  socket.on('tipit-add-hint-slot', () => {
-    tipitState.hintSlotCount = Math.max(parseInt(tipitState.hintSlotCount) || 2, 2) + 1;
-    tipitState.rounds[tipitState.activeRoundIndex].hintSlotCount = tipitState.hintSlotCount;
     saveTipitRounds();
     io.emit('tipit-state-update', tipitState);
   });
@@ -385,7 +373,6 @@ io.on('connection', (socket) => {
     if (configData) {
       round.targetTerm = typeof configData.targetTerm === 'string' ? configData.targetTerm : round.targetTerm;
       round.bonusHintText = typeof configData.bonusHintText === 'string' ? configData.bonusHintText : round.bonusHintText;
-      round.hintSlotCount = Math.max(parseInt(configData.hintSlotCount) || 2, 2);
       if (Array.isArray(configData.hints)) {
         round.hints = configData.hints.map((hint, index) => ({
           id: index + 1,
